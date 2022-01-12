@@ -1,0 +1,24 @@
+[Unit]
+Description=m-agent service
+ConditionPathExists=/usr/local/bin/m-agent
+After=network.target
+Requires=network.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+LimitNOFILE=1024
+
+Restart=always
+RestartSec=5
+
+ExecStart=/usr/local/bin/m-agent
+
+PermissionsStartOnly=true
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=m-agent
+
+[Install]
+WantedBy=multi-user.target
