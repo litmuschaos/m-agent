@@ -1,12 +1,12 @@
 # m-agent
-Machine Agent aka. m-agent is a lightweight, platform-generic daemon agent that can remotely inject faults into Guest-OS scoped resources, as part of the Litmus Chaos Experiments.
+Machine Agent a.k.a. m-agent is a lightweight, platform-generic daemon agent that can remotely inject faults into Guest-OS scoped resources, as part of the Litmus Chaos Experiments.
 
 # Requirements
 - Linux OS [Tested on Ubuntu, CentOS, RHEL, and SUSE Linux]
 - Systemd
 
 # Installation
-To install m-agent in your target machine, you can use the following commands in your target machine:
+To install m-agent in your target machine, you can execute the following commands in the target machine:
 ```
 $ curl -fsSL -o get_m-agent.sh https://raw.githubusercontent.com/litmuschaos/m-agent/master/scripts/install.sh
 $ chmod 700 get_m-agent.sh
@@ -24,11 +24,11 @@ options:
     	token expiry duration (non-interactive mode)
 ```
 
-Upon installing m-agent, you can use it to generate a token for your Chaos Experiment. This step will require you to specify an expiry duration for your agent. The tokens are valid through a minimal duration of 1 minute to a maximal duration of 30 days. The token can be generated in two modes:
+Upon installing m-agent, you can use it to generate a token for your Chaos Experiment. It step will require you to specify an expiry duration for your token. Tokens are valid through a minimum duration of 1 minute to a maximum of 30 days. The token can be generated in two modes:
 1. Interactive Mode
 2. Non-Interactive Mode
 
-To generate the token in an interactive mode, use the `-get-token` boolean flag, which will allow you to prompt your expiry duration:
+To generate a token in an interactive mode, use the `-get-token` boolean flag, which will prompt you to select the expiry duration for the token:
 ```
 m-agent -get-token
 ``` 
@@ -48,7 +48,7 @@ m-agent -get-token -token-expiry-duration 15D
 ```
 
 # Uninstallation
-If you wish to uninstall m-agent, you can execute the following commands:
+If you wish to uninstall m-agent, you can execute the following commands in the target machine:
 ```
 $ curl -fsSL -o remove_m-agent.sh https://raw.githubusercontent.com/litmuschaos/m-agent/master/scripts/uninstall.sh
 $ chmod 700 remove_m-agent.sh
