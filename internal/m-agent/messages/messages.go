@@ -45,10 +45,5 @@ func ListenForClientMessage(conn *websocket.Conn) (string, []byte, error) {
 // SendMessageToClient wraps a message action and payload in a Message structure and sends it to the client
 func SendMessageToClient(conn *websocket.Conn, action string, payload interface{}) error {
 
-	err := conn.WriteJSON(Message{action, payload})
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return conn.WriteJSON(Message{action, payload})
 }
