@@ -16,6 +16,7 @@ package main
 import (
 	"flag"
 	"log"
+	"os"
 
 	"github.com/litmuschaos/m-agent/api/server"
 	"github.com/litmuschaos/m-agent/internal/m-agent/errorcodes"
@@ -32,18 +33,18 @@ func main() {
 	if *generateToken {
 
 		// set token error code and token error string
-		log.SetPrefix(errorcodes.GetTokenErrorPrefix())
+		tokenLogger := log.New(os.Stdout, errorcodes.GetTokenErrorPrefix(), log.Ldate|log.Ltime|log.Lmsgprefix)
 
 		// generate a JWT for authentication
 		if *tokenExpiryDuration == "" {
 
 			if err := tokens.HandleInteractiveTokenGeneration(); err != nil {
-				log.Println(err)
+				tokenLogger.Println(err)
 			}
 		} else {
 
 			if err := tokens.HandleNonInteractiveTokenGeneration(*tokenExpiryDuration); err != nil {
-				log.Println(err)
+				tokenLogger.Println(err)
 			}
 		}
 	} else {
