@@ -14,12 +14,12 @@
 package auth
 
 import (
-	"errors"
 	"time"
 	"unicode"
 
 	"github.com/denisbrodbeck/machineid"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/pkg/errors"
 )
 
 // GenerateJWT generates a JWT for the authentication of client requests
@@ -47,13 +47,13 @@ func GenerateJWT(dayHourMinuteChar rune, dayHourMinuteValue int) (string, error)
 
 	machineId, err := machineid.ID()
 	if err != nil {
-		return "", errors.New("failed to fetch the machine id, " + err.Error())
+		return "", errors.Errorf("failed to fetch the machine id, %v", err)
 	}
 
 	// sign the token with the secret signing key
 	tokenString, err := token.SignedString([]byte(machineId))
 	if err != nil {
-		return "", errors.New("failed to sign the authentication token, " + err.Error())
+		return "", errors.Errorf("failed to sign the authentication token, %v", err)
 	}
 
 	return tokenString, nil

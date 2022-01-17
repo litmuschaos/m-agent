@@ -15,10 +15,9 @@ package process
 
 import (
 	"encoding/json"
-	"errors"
-	"strconv"
 
 	"github.com/mitchellh/go-ps"
+	"github.com/pkg/errors"
 )
 
 // isProcessRunning checks if a given process is running or not
@@ -58,7 +57,7 @@ func ProcessStateCheck(payload []byte) error {
 		}
 
 		if !isProcessRunning {
-			return errors.New(strconv.Itoa(processId) + " process not found")
+			return errors.Errorf("%v process not found", processId)
 		}
 	}
 

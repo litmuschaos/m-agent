@@ -21,12 +21,7 @@ import (
 // killProcess kills a given target process
 func killProcess(processId, signal int) error {
 
-	err := syscall.Kill(processId, syscall.Signal(signal))
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return syscall.Kill(processId, syscall.Signal(signal))
 }
 
 // KillTargetProcesses kills all the target processes
@@ -40,8 +35,7 @@ func KillTargetProcesses(payload []byte) error {
 
 	for _, processId := range processes {
 
-		err := killProcess(processId, 9)
-		if err != nil {
+		if err := killProcess(processId, 9); err != nil {
 			return err
 		}
 	}

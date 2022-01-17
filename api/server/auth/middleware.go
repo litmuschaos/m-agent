@@ -14,7 +14,6 @@
 package auth
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -22,6 +21,7 @@ import (
 	"github.com/denisbrodbeck/machineid"
 	"github.com/golang-jwt/jwt/v4"
 	errorcodes "github.com/litmuschaos/m-agent/internal/m-agent/error-codes"
+	"github.com/pkg/errors"
 )
 
 // IsAuthorized validates whether the client request is authenticated with a valid JWT
@@ -44,7 +44,7 @@ func IsAuthorized(endpoint func(http.ResponseWriter, *http.Request)) http.Handle
 
 				machineId, err := machineid.ID()
 				if err != nil {
-					return nil, errors.New("failed to fetch the machine id, " + err.Error())
+					return nil, errors.Errorf("failed to fetch the machine id, %v", err)
 				}
 
 				return []byte(machineId), nil

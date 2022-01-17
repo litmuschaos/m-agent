@@ -1,5 +1,5 @@
 # m-agent
-Machine Agent a.k.a. m-agent is a lightweight, platform-generic daemon agent that can remotely inject faults into Guest-OS scoped resources, as part of the Litmus Chaos Experiments.
+Machine Agent a.k.a. m-agent is a lightweight, platform-generic daemon agent that can remotely inject faults into machine scoped resources, as part of the LitmusChaos Experiments.
 
 # Requirements
 - Linux OS [Tested on Ubuntu, CentOS, RHEL, and SUSE Linux]
@@ -49,8 +49,12 @@ m-agent -get-token -token-expiry-duration 15D
 
 # Uninstallation
 If you wish to uninstall m-agent, you can execute the following commands in the target machine:
-```
+```bash
 $ curl -fsSL -o remove_m-agent.sh https://raw.githubusercontent.com/litmuschaos/m-agent/master/scripts/uninstall.sh
 $ chmod 700 remove_m-agent.sh
 $ ./remove_m-agent.sh
+```
+OR
+```bash
+
 ```

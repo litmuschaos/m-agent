@@ -47,7 +47,7 @@ func HandleInteractiveTokenGeneration() {
 
 	idx, _, err := list.Run()
 	if err != nil {
-		log.Printf("Error during token expiry prompt selection, %v", err.Error())
+		log.Printf("Error during token expiry prompt selection, %v", err)
 		return
 	}
 
@@ -55,25 +55,25 @@ func HandleInteractiveTokenGeneration() {
 	case "30 Minutes":
 		token, err = auth.GenerateJWT('m', 30)
 		if err != nil {
-			log.Printf("Error during authentication token generation, %v", err.Error())
+			log.Printf("Error during authentication token generation, %v", err)
 			return
 		}
 	case "1 Hour":
 		token, err = auth.GenerateJWT('h', 1)
 		if err != nil {
-			log.Printf("Error during authentication token generation, %v", err.Error())
+			log.Printf("Error during authentication token generation, %v", err)
 			return
 		}
 	case "24 Hours":
 		token, err = auth.GenerateJWT('h', 24)
 		if err != nil {
-			log.Printf("Error during authentication token generation, %v", err.Error())
+			log.Printf("Error during authentication token generation, %v", err)
 			return
 		}
 	case "30 Days":
 		token, err = auth.GenerateJWT('d', 30)
 		if err != nil {
-			log.Printf("Error during authentication token generation, %v", err.Error())
+			log.Printf("Error during authentication token generation, %v", err)
 			return
 		}
 	}
@@ -108,7 +108,7 @@ func HandleNonInteractiveTokenGeneration(tokenExpiryDuration string) {
 
 	token, err := auth.GenerateJWT(dayHourMinuteChar, dayHourMinuteValue)
 	if err != nil {
-		log.Printf("Error during authentication token generation, %v", err.Error())
+		log.Printf("Error during authentication token generation, %v", err)
 		return
 	}
 
@@ -116,7 +116,7 @@ func HandleNonInteractiveTokenGeneration(tokenExpiryDuration string) {
 
 	jsonResult, err := json.MarshalIndent(Token{Token: token, Endpoint: endpoint}, "", "  ")
 	if err != nil {
-		log.Printf("Error during creation of JSON token output, %v", err.Error())
+		log.Printf("Error during creation of JSON token output, %v", err)
 		return
 	}
 
