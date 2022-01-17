@@ -29,8 +29,7 @@ func ListenForClientMessage(conn *websocket.Conn) (string, []byte, error) {
 
 	var msg Message
 
-	err := conn.ReadJSON(&msg)
-	if err != nil {
+	if err := conn.ReadJSON(&msg); err != nil {
 		return "", []byte{}, err
 	}
 

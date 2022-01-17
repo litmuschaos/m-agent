@@ -23,7 +23,7 @@ import (
 )
 
 // GenerateJWT generates a JWT for the authentication of client requests
-func GenerateJWT(dayHourMinuteChar rune, dayHourMinuteValue int) (string, error) {
+func GenerateJWT(dayHourMinuteChar rune, duration int) (string, error) {
 
 	// create a new token with the specified encryption algorithm
 	token := jwt.New(jwt.SigningMethodHS256)
@@ -36,13 +36,13 @@ func GenerateJWT(dayHourMinuteChar rune, dayHourMinuteValue int) (string, error)
 	// expire the token after this time
 	switch unicode.ToLower(dayHourMinuteChar) {
 	case 'd':
-		claims["exp"] = time.Now().Add(time.Hour * 24 * time.Duration(dayHourMinuteValue)).Unix()
+		claims["exp"] = time.Now().Add(time.Hour * 24 * time.Duration(duration)).Unix()
 
 	case 'h':
-		claims["exp"] = time.Now().Add(time.Hour * time.Duration(dayHourMinuteValue)).Unix()
+		claims["exp"] = time.Now().Add(time.Hour * time.Duration(duration)).Unix()
 
 	case 'm':
-		claims["exp"] = time.Now().Add(time.Minute * time.Duration(dayHourMinuteValue)).Unix()
+		claims["exp"] = time.Now().Add(time.Minute * time.Duration(duration)).Unix()
 	}
 
 	machineId, err := machineid.ID()

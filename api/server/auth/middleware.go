@@ -20,7 +20,7 @@ import (
 
 	"github.com/denisbrodbeck/machineid"
 	"github.com/golang-jwt/jwt/v4"
-	errorcodes "github.com/litmuschaos/m-agent/internal/m-agent/error-codes"
+	errorcodes "github.com/litmuschaos/m-agent/internal/m-agent/errorcodes"
 	"github.com/pkg/errors"
 )
 

@@ -19,8 +19,8 @@ import (
 	"testing"
 
 	"github.com/litmuschaos/m-agent/api/server/auth"
-	processKill "github.com/litmuschaos/m-agent/experiments/process-kill"
-	errorcodes "github.com/litmuschaos/m-agent/internal/m-agent/error-codes"
+	processKill "github.com/litmuschaos/m-agent/experiments/process-kill/experiment"
+	errorcodes "github.com/litmuschaos/m-agent/internal/m-agent/errorcodes"
 	"github.com/stretchr/testify/assert"
 )
 

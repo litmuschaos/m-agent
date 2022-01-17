@@ -17,7 +17,7 @@ import (
 	"log"
 	"net/http"
 
-	errorcodes "github.com/litmuschaos/m-agent/internal/m-agent/error-codes"
+	errorcodes "github.com/litmuschaos/m-agent/internal/m-agent/errorcodes"
 	"github.com/litmuschaos/m-agent/internal/m-agent/messages"
 	"github.com/litmuschaos/m-agent/internal/m-agent/upgrader"
 	"github.com/litmuschaos/m-agent/pkg/probes"

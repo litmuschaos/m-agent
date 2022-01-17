@@ -15,12 +15,11 @@ package server
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
 	"github.com/litmuschaos/m-agent/api/server/auth"
-	processKill "github.com/litmuschaos/m-agent/experiments/process-kill"
+	processKill "github.com/litmuschaos/m-agent/experiments/process-kill/experiment"
 )
 
 // fallbackRouteHandler serves a 404 status code and error message for invalid routes
@@ -31,12 +30,12 @@ func fallbackRouteHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // HandleRequests listens for requests made by the clients at any specified route
-func HandleRequests() {
+func HandleRequests() error {
 
 	router := mux.NewRouter()
 
 	router.Handle("/process-kill", auth.IsAuthorized(processKill.ProcessKill))
-
 	router.NotFoundHandler = http.HandlerFunc(fallbackRouteHandler)
-	log.Fatal(http.ListenAndServe(":41365", router))
+
+	return http.ListenAndServe(":41365", router)
 }

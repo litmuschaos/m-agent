@@ -27,7 +27,7 @@ do
     env GOOS=$GOOS GOARCH=$GOARCH VERSION=$TAG go build -ldflags "-X main.Version=$TAG" -v -o platforms-$TAG/$OUTPUT_NAME $PACKAGE
 
     if [ $? -ne 0 ]; then
-        echo 'An error has occurred! Aborting the script execution...'
+        echo "An error has occurred with exit code $?! Aborting the script execution..."
         exit 1
     fi
 

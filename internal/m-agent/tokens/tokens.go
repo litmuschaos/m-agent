@@ -15,25 +15,21 @@ package tokens
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 	"unicode"
 
+	"github.com/pkg/errors"
+
 	"github.com/fatih/color"
 	"github.com/litmuschaos/m-agent/api/server/auth"
-	errorcodes "github.com/litmuschaos/m-agent/internal/m-agent/error-codes"
-	"github.com/litmuschaos/m-agent/internal/m-agent/ip-address"
+	"github.com/litmuschaos/m-agent/internal/m-agent/ip"
 	"github.com/manifoldco/promptui"
 )
 
 // HandleInteractiveTokenGeneration facilitates the generation of a JWT with an expiry time with an interactive CLI prompt
-func HandleInteractiveTokenGeneration() {
-
-	// set token error code and token error string
-	log.SetPrefix(errorcodes.GetTokenErrorPrefix())
+func HandleInteractiveTokenGeneration() error {
 
 	var token string
 	var err error
@@ -47,34 +43,29 @@ func HandleInteractiveTokenGeneration() {
 
 	idx, _, err := list.Run()
 	if err != nil {
-		log.Printf("Error during token expiry prompt selection, %v", err)
-		return
+		return errors.Errorf("Error during token expiry prompt selection, %v", err)
 	}
 
 	switch tokenExpirationPrompts[idx] {
 	case "30 Minutes":
 		token, err = auth.GenerateJWT('m', 30)
 		if err != nil {
-			log.Printf("Error during authentication token generation, %v", err)
-			return
+			return errors.Errorf("Error during authentication token generation with 30 min validity, %v", err)
 		}
 	case "1 Hour":
 		token, err = auth.GenerateJWT('h', 1)
 		if err != nil {
-			log.Printf("Error during authentication token generation, %v", err)
-			return
+			return errors.Errorf("Error during authentication token generation with 1 hr validity, %v", err)
 		}
 	case "24 Hours":
 		token, err = auth.GenerateJWT('h', 24)
 		if err != nil {
-			log.Printf("Error during authentication token generation, %v", err)
-			return
+			return errors.Errorf("Error during authentication token generation with 24 hr validity, %v", err)
 		}
 	case "30 Days":
 		token, err = auth.GenerateJWT('d', 30)
 		if err != nil {
-			log.Printf("Error during authentication token generation, %v", err)
-			return
+			return errors.Errorf("Error during authentication token generation with 30 days validity, %v", err)
 		}
 	}
 
@@ -87,37 +78,33 @@ func HandleInteractiveTokenGeneration() {
 
 	boldWhite.Print("Authentication Token: ")
 	fmt.Println(token)
+
+	return nil
 }
 
 // HandleNonInteractiveTokenGeneration facilitates the generation of a JWT with an expiry time in a non-interactive manner
-func HandleNonInteractiveTokenGeneration(tokenExpiryDuration string) {
-
-	// set token error code and token error string
-	log.SetPrefix(errorcodes.GetTokenErrorPrefix())
+func HandleNonInteractiveTokenGeneration(tokenExpiryDuration string) error {
 
 	type Token struct {
 		Token    string `json:"token"`
 		Endpoint string `json:"endpoint"`
 	}
 
-	dayHourMinuteChar, dayHourMinuteValue, err := validateTokenExpiryDuration(tokenExpiryDuration)
+	dayHourMinuteChar, duration, err := validateTokenExpiryDuration(tokenExpiryDuration)
 	if err != nil {
-		log.Println("Invalid token expiry duration")
-		return
+		return err
 	}
 
-	token, err := auth.GenerateJWT(dayHourMinuteChar, dayHourMinuteValue)
+	token, err := auth.GenerateJWT(dayHourMinuteChar, duration)
 	if err != nil {
-		log.Printf("Error during authentication token generation, %v", err)
-		return
+		return errors.Errorf("Error during authentication token generation, %v", err)
 	}
 
 	endpoint := ip.GetPublicIP() + ":41365"
 
 	jsonResult, err := json.MarshalIndent(Token{Token: token, Endpoint: endpoint}, "", "  ")
 	if err != nil {
-		log.Printf("Error during creation of JSON token output, %v", err)
-		return
+		return errors.Errorf("Error during creation of JSON token output, %v", err)
 	}
 
 	jsonResultString := string(jsonResult)
@@ -128,6 +115,8 @@ func HandleNonInteractiveTokenGeneration(tokenExpiryDuration string) {
 	jsonResultString = strings.Replace(jsonResultString, "\\u003e", ">", -1)
 
 	fmt.Println(jsonResultString)
+
+	return nil
 }
 
 // validateTokenExpiryDuration ensures that the token expiry duration input is correctly formatted
@@ -137,34 +126,34 @@ func validateTokenExpiryDuration(tokenExpiryDuration string) (rune, int, error) 
 	dayHourMinuteChar := []rune(tokenExpiryDuration[len(tokenExpiryDuration)-1:])[0]
 
 	if !unicode.IsLetter(dayHourMinuteChar) {
-		return ' ', 0, errors.New("")
+		return ' ', 0, errors.Errorf("Invalid token expiry duration")
 	}
 
 	// slice-off the last character in the tokenExpiryDuration string
-	dayHourMinuteValue, err := strconv.Atoi(tokenExpiryDuration[:len(tokenExpiryDuration)-1])
+	duration, err := strconv.Atoi(tokenExpiryDuration[:len(tokenExpiryDuration)-1])
 	if err != nil {
 		return ' ', 0, err
 	}
 
 	switch unicode.ToLower(dayHourMinuteChar) {
 	case 'd':
-		if dayHourMinuteValue < 1 || dayHourMinuteValue > 30 {
-			return ' ', 0, errors.New("")
+		if duration < 1 || duration > 30 {
+			return ' ', 0, errors.Errorf("Invalid token expiry duration")
 		}
 
 	case 'h':
-		if dayHourMinuteValue < 1 || dayHourMinuteValue > 24 {
-			return ' ', 0, errors.New("")
+		if duration < 1 || duration > 24 {
+			return ' ', 0, errors.Errorf("Invalid token expiry duration")
 		}
 
 	case 'm':
-		if dayHourMinuteValue < 1 || dayHourMinuteValue > 60 {
-			return ' ', 0, errors.New("")
+		if duration < 1 || duration > 60 {
+			return ' ', 0, errors.Errorf("Invalid token expiry duration")
 		}
 
 	default:
-		return ' ', 0, errors.New("")
+		return ' ', 0, errors.Errorf("Invalid token expiry duration")
 	}
 
-	return dayHourMinuteChar, dayHourMinuteValue, nil
+	return dayHourMinuteChar, duration, nil
 }

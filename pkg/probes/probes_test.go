@@ -24,8 +24,8 @@ import (
 //TestExecuteCmdProbeCommand executes the cmdProbe with an echo command
 func TestExecuteCmdProbeCommand(t *testing.T) {
 
-	command := `echo "This is echoed from the probe"`
-	expectedOutput := "This is echoed from the probe"
+	command := `echo "This is printed from the probe"`
+	expectedOutput := "This is printed from the probe"
 
 	payload, err := json.Marshal(command)
 	if err != nil {
