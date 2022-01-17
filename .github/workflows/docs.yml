@@ -1,0 +1,139 @@
+name: docs-release-pipeline
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'docs/**'
+    tags:
+      - '*'
+
+jobs:
+  get-filenames:
+    runs-on: ubuntu-latest
+    outputs:
+      filenames: ${{ steps.create-filenames-array.outputs.json }}
+      # deleteddocsonly: ${{ steps.create-filenames-array.outputs.deleteddocsonly }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      # - name: Run changed-files with defaults on the docs
+      #   id: changed-files-for-docs
+      #   uses: tj-actions/changed-files@v12.2
+
+      # - name: Store AsyncAPI document filenames in a JSON array if available
+      #   id: create-filenames-array
+      #   run: |
+      #     FILE_NAMES=""
+
+      #     for FILE_PATH in ${{ steps.changed-files-for-docs.outputs.all_changed_files }}; do
+      #       if [[ $FILE_PATH == "docs/"* ]]; then
+      #         FILE_NAMES+="$(basename "$FILE_PATH" | sed -e 's/\.yaml$//') "
+      #       fi
+      #     done
+
+      #     if [ -z "$FILE_NAMES" ]; then
+      #       echo "::set-output name=deleteddocsonly::true"
+      #     else
+      #       JSON="{"\""docs"\"":$(echo $FILE_NAMES | xargs | sed -z '$ s/\n$//' | jq -R -s -c 'split(" ")')}"
+            
+      #       echo $JSON
+      #       echo $JSON | jq .
+      #       echo "::set-output name=json::$JSON"
+      #       echo "::set-output name=deleteddocsonly::false"
+      #     fi
+
+      - name: Store AsyncAPI document filenames in a JSON array
+        id: create-filenames-array
+        run: |
+          JSON="{"\""docs"\"":$(ls docs | sed -e 's/\.yaml$//' | jq -R -s -c 'split("\n")[:-1]')}"
+          echo $JSON
+          echo $JSON | jq .
+          echo "::set-output name=json::$JSON"
+
+  check-filenames:
+    runs-on: ubuntu-latest
+    needs: get-filenames
+    # if: ${{ needs.get-filenames.outputs.deleteddocsonly == 'false' }} 
+    steps:
+      - name: Install json2yaml
+        run: |
+          sudo npm install -g json2yaml
+
+      - name: Check filenames JSON array definition
+        run: |
+          matrix='${{ needs.get-filenames.outputs.filenames }}'
+          echo $matrix
+          echo $matrix | jq .
+          echo $matrix | json2yaml
+
+  verify-docs:
+    runs-on: ubuntu-latest
+    needs: [get-filenames, check-filenames]
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.get-filenames.outputs.filenames) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Validating AsyncAPI document
+        uses: WaleedAshraf/asyncapi-github-action@v0.0.6
+        with:
+          filepath: "docs/${{ matrix.docs }}.yaml"
+
+  build-markdown-docs:
+    runs-on: ubuntu-latest
+    needs: [get-filenames, verify-docs]
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.get-filenames.outputs.filenames) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Generating Markdown AsyncAPI document
+        uses: docker://asyncapi/github-action-for-generator:2.0.0
+        with:
+          template: '@asyncapi/markdown-template@0.10.0'
+          filepath: 'docs/${{ matrix.docs }}.yaml'
+          parameters: outFilename=README.md
+          output: "experiments/${{ matrix.docs }}"
+
+      - name: Add & Commit
+        uses: EndBug/add-and-commit@v7.5.0
+        with: 
+          author_name: Litmus Bot
+          committer_email: litmusbot@chaosnative.com
+          message: 'Updated README docs for ${{ matrix.docs }} experiment'
+
+  build-html-docs:
+    runs-on: ubuntu-latest
+    needs: [verify-docs]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v2.5.1
+        with:
+          node-version: '14'
+      
+      - name: Build HTML Docs
+        run: |
+          npm install -g @asyncapi/generator
+          
+          mkdir html-docs
+
+          for filepath in docs/*; do
+            ag $filepath @asyncapi/html-template -o html-docs -p singleFile=true -p outFilename=$(basename $filepath | sed -e 's/\.yaml$//').html --force-write
+          done
+
+      - name: Publish HTML Docs to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@4.1.7
+        with:
+          branch: gh-pages
+          folder: html-docs
