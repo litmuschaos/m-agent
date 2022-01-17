@@ -54,7 +54,3 @@ $ curl -fsSL -o remove_m-agent.sh https://raw.githubusercontent.com/litmuschaos/
 $ chmod 700 remove_m-agent.sh
 $ ./remove_m-agent.sh
 ```
-OR
-```bash
-
-```
