@@ -15,8 +15,10 @@ package main
 
 import (
 	"flag"
+	"log"
 
 	"github.com/litmuschaos/m-agent/api/server"
+	"github.com/litmuschaos/m-agent/internal/m-agent/errorcodes"
 	"github.com/litmuschaos/m-agent/internal/m-agent/port"
 	"github.com/litmuschaos/m-agent/internal/m-agent/tokens"
 )
@@ -29,19 +31,29 @@ func main() {
 
 	if *generateToken {
 
+		// set token error code and token error string
+		log.SetPrefix(errorcodes.GetTokenErrorPrefix())
+
 		// generate a JWT for authentication
 		if *tokenExpiryDuration == "" {
 
-			tokens.HandleInteractiveTokenGeneration()
+			if err := tokens.HandleInteractiveTokenGeneration(); err != nil {
+				log.Println(err)
+			}
 		} else {
 
-			tokens.HandleNonInteractiveTokenGeneration(*tokenExpiryDuration)
+			if err := tokens.HandleNonInteractiveTokenGeneration(*tokenExpiryDuration); err != nil {
+				log.Println(err)
+			}
 		}
 	} else {
+
 		if port.IsPortOpen("41365") {
 
 			// handle client requests
-			server.HandleRequests()
+			if err := server.HandleRequests(); err != nil {
+				log.Fatal(err)
+			}
 		} else {
 
 			// port is not open i.e. daemon is already running
