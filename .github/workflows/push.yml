@@ -1,0 +1,57 @@
+name: push-release-pipeline
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - '*'
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.17
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: gofmt check
+        run: |
+          if [ "$(gofmt -s -l . | wc -l)" -ne 0 ]
+          then
+          echo "The following files were found to be not go formatted:"
+          gofmt -s -l .
+          exit 1
+          fi
+      - name: golangci-lint
+        uses: reviewdog/action-golangci-lint@v1
+
+      - name: Run Unit Tests
+        run: go test -v ./...
+
+      - name: unused-package check
+        run: make unused-package-check
+
+      - name: Get tag
+        shell: bash
+        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF##*/})"
+        id: tag
+
+      - name: Build Binaries
+        run: |
+          git checkout ${GITHUB_REF##*/}
+          make TAG=${{ steps.tag.outputs.branch }} build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Copy binaries and service unit file to the s3 bucket
+        run: |
+          cp init/m-agent.service platforms-${{ steps.tag.outputs.branch }}
+          aws s3 sync platforms-${{ steps.tag.outputs.branch }} s3://${{ secrets.AWS_S3_BUCKET }}
