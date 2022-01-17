@@ -86,8 +86,8 @@ func HandleInteractiveTokenGeneration() error {
 func HandleNonInteractiveTokenGeneration(tokenExpiryDuration string) error {
 
 	type Token struct {
-		Token    string `json:"token"`
 		Endpoint string `json:"endpoint"`
+		Token    string `json:"token"`
 	}
 
 	dayHourMinuteChar, duration, err := validateTokenExpiryDuration(tokenExpiryDuration)
@@ -102,7 +102,7 @@ func HandleNonInteractiveTokenGeneration(tokenExpiryDuration string) error {
 
 	endpoint := ip.GetPublicIP() + ":41365"
 
-	jsonResult, err := json.MarshalIndent(Token{Token: token, Endpoint: endpoint}, "", "  ")
+	jsonResult, err := json.MarshalIndent(Token{Endpoint: endpoint, Token: token}, "", "  ")
 	if err != nil {
 		return errors.Errorf("Error during creation of JSON token output, %v", err)
 	}
