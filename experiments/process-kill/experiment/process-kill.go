@@ -18,6 +18,7 @@ import (
 	"net/http"
 
 	errorcodes "github.com/litmuschaos/m-agent/internal/m-agent/errorcodes"
+	logger "github.com/litmuschaos/m-agent/internal/m-agent/log"
 	"github.com/litmuschaos/m-agent/internal/m-agent/messages"
 	"github.com/litmuschaos/m-agent/internal/m-agent/upgrader"
 	"github.com/litmuschaos/m-agent/pkg/probes"
@@ -30,6 +31,12 @@ func ProcessKill(w http.ResponseWriter, r *http.Request) {
 	// upgrade the connection to a websocket connection
 	upgrader := upgrader.GetConnectionUpgrader()
 
+	clientMessageReadLogger := logger.GetClientMessageReadErrorLogger()
+	steadyStateCheckErrorLogger := logger.GetSteadyStateCheckErrorLogger()
+	executeExperimentErrorLogger := logger.GetExecuteExperimentErrorLogger()
+	commandProbeExecutionErrorLogger := logger.GetCommandProbeExecutionErrorLogger()
+	invalidActionErrorLogger := logger.GetCommandProbeExecutionErrorLogger()
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Printf("Failed to establish connection with client, %v", err)
@@ -41,7 +48,8 @@ func ProcessKill(w http.ResponseWriter, r *http.Request) {
 		action, payload, err := messages.ListenForClientMessage(conn)
 		if err != nil {
 			if err := messages.SendMessageToClient(conn, "ERROR", errorcodes.GetClientMessageReadErrorPrefix()+err.Error()); err != nil {
-				log.Printf(errorcodes.GetClientMessageReadErrorPrefix()+"Error occured while sending error message to client, %v", err)
+
+				clientMessageReadLogger.Printf("Error occured while sending error message to client, %v", err)
 			}
 			conn.Close()
 			return
@@ -51,15 +59,18 @@ func ProcessKill(w http.ResponseWriter, r *http.Request) {
 
 		case "CHECK_STEADY_STATE":
 			if err := process.ProcessStateCheck(payload); err != nil {
+
 				if err := messages.SendMessageToClient(conn, "ERROR", errorcodes.GetSteadyStateCheckErrorPrefix()+err.Error()); err != nil {
-					log.Printf(errorcodes.GetSteadyStateCheckErrorPrefix()+"Error occured while sending error message to client, %v", err)
+					steadyStateCheckErrorLogger.Printf("Error occured while sending error message to client, %v", err)
 				}
+
 				conn.Close()
 				return
 			}
 
 			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", messages.Message{}); err != nil {
-				log.Printf(errorcodes.GetSteadyStateCheckErrorPrefix()+"Error occured while sending feedback message to client, %v", err)
+
+				steadyStateCheckErrorLogger.Printf("Error occured while sending feedback message to client, %v", err)
 				conn.Close()
 				return
 			}
@@ -67,14 +78,14 @@ func ProcessKill(w http.ResponseWriter, r *http.Request) {
 		case "EXECUTE_EXPERIMENT":
 			if err := process.KillTargetProcesses(payload); err != nil {
 				if err := messages.SendMessageToClient(conn, "ERROR", errorcodes.GetExecuteExperimentErrorPrefix()+err.Error()); err != nil {
-					log.Printf(errorcodes.GetExecuteExperimentErrorPrefix()+"Error occured while sending error message to client, %v", err)
+					executeExperimentErrorLogger.Printf("Error occured while sending error message to client, %v", err)
 				}
 				conn.Close()
 				return
 			}
 
 			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", messages.Message{}); err != nil {
-				log.Printf(errorcodes.GetExecuteExperimentErrorPrefix()+"Error occured while sending feedback message to client, %v", err)
+				executeExperimentErrorLogger.Printf("Error occured while sending feedback message to client, %v", err)
 				conn.Close()
 				return
 			}
@@ -84,21 +95,21 @@ func ProcessKill(w http.ResponseWriter, r *http.Request) {
 
 			if err != nil {
 				if err := messages.SendMessageToClient(conn, "ERROR", errorcodes.GetCommandProbeExecutionErrorPrefix()+err.Error()); err != nil {
-					log.Printf("Error occured while sending error message to client, %v", err)
+					commandProbeExecutionErrorLogger.Printf("Error occured while sending error message to client, %v", err)
 					conn.Close()
 					return
 				}
 			}
 
 			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", stdout); err != nil {
-				log.Printf(errorcodes.GetCommandProbeExecutionErrorPrefix()+"Error occured while sending feedback message to client, %v", err)
+				commandProbeExecutionErrorLogger.Printf("Error occured while sending feedback message to client, %v", err)
 				conn.Close()
 				return
 			}
 
 		default:
 			if err := messages.SendMessageToClient(conn, "ERROR", errorcodes.GetInvalidActionErrorPrefix()+"Invalid action: "+action); err != nil {
-				log.Printf(errorcodes.GetInvalidActionErrorPrefix()+"Error occured while sending error message to client, %v", err)
+				invalidActionErrorLogger.Printf("Error occured while sending error message to client, %v", err)
 			}
 			conn.Close()
 			return
