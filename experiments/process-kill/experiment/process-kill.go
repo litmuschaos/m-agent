@@ -21,7 +21,7 @@ import (
 	"github.com/litmuschaos/m-agent/internal/m-agent/messages"
 	"github.com/litmuschaos/m-agent/internal/m-agent/upgrader"
 	"github.com/litmuschaos/m-agent/pkg/probes"
-	"github.com/litmuschaos/m-agent/pkg/process-kill"
+	"github.com/litmuschaos/m-agent/pkg/process"
 )
 
 // ProcessKill listens for the client actions and executes them as appropriate
