@@ -25,6 +25,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/litmuschaos/m-agent/api/server/auth"
 	"github.com/litmuschaos/m-agent/internal/m-agent/ip"
+	"github.com/litmuschaos/m-agent/internal/m-agent/port"
 	"github.com/manifoldco/promptui"
 )
 
@@ -69,7 +70,12 @@ func HandleInteractiveTokenGeneration() error {
 		}
 	}
 
-	endpoint := ip.GetPublicIP() + ":41365"
+	port, err := port.GetMAgentPort()
+	if err != nil {
+		return err
+	}
+
+	endpoint := ip.GetPublicIP() + ":" + port
 
 	boldWhite := color.New(color.FgWhite, color.Bold)
 
@@ -100,7 +106,12 @@ func HandleNonInteractiveTokenGeneration(tokenExpiryDuration string) error {
 		return errors.Errorf("Error during authentication token generation, %v", err)
 	}
 
-	endpoint := ip.GetPublicIP() + ":41365"
+	port, err := port.GetMAgentPort()
+	if err != nil {
+		return err
+	}
+
+	endpoint := ip.GetPublicIP() + ":" + port
 
 	jsonResult, err := json.MarshalIndent(Token{Endpoint: endpoint, Token: token}, "", "  ")
 	if err != nil {
