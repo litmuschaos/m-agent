@@ -178,6 +178,7 @@ help () {
   echo -e "\t[--version|-v <desired_version>] . When not defined it fetches the latest release from GitHub"
   echo -e "\te.g. --version v3.0.0 or -v canary"
   echo -e "\t[--no-sudo]  ->> install without sudo"
+  echo -e "\t[--port|-p <port>] ->> custom port for m-agent server"
 }
 
 # cleanup temporary files 
@@ -212,8 +213,14 @@ while [[ $# -gt 0 ]]; do
            exit 0
        fi
        ;;
-    '--port')
-       PORT=$2
+    '--port'|-p)
+       shift
+       if [[ $# -ne 0 ]]; then
+          PORT="${1}"
+       else
+          echo -e "Please provide the port for m-agent server. e.g. 41365"
+          exit 0
+       fi
        ;;
     '--no-sudo')
        USE_SUDO="false"
