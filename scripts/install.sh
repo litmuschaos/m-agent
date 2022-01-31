@@ -135,6 +135,7 @@ createConfigFile() {
   runAsRoot mkdir "/etc/$BINARY_NAME"
   runAsRoot echo $PORT > "$M_AGENT_TMP_ROOT/PORT"
   runAsRoot cp "$M_AGENT_TMP_ROOT/PORT" "/etc/$BINARY_NAME/"
+  echo "$BINARY_NAME server PORT config file created"
 }
 
 # setupService downloads the service unit file, set it up and start the service
