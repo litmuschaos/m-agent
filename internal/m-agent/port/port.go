@@ -61,7 +61,7 @@ func UpdateMAgentPort(newPort string) error {
 		return errors.Errorf("port unavailable")
 	}
 
-	f, err := os.OpenFile("/etc/eg/PORT", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+	f, err := os.OpenFile("/etc/m-agent/PORT", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
 	if err != nil {
 		return err
 	}
