@@ -235,6 +235,7 @@ checkDesiredVersion
 if ! isMAgentInstalled; then
   downloadFile
   installFile
+  createConfigFile
   setupService
 fi
 cleanup
