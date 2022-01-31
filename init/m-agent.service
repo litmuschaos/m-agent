@@ -13,7 +13,7 @@ LimitNOFILE=1024
 Restart=always
 RestartSec=5
 
-ExecStart=/usr/local/bin/m-agent --port-file=/etc/m-agent/PORT
+ExecStart=/usr/local/bin/m-agent
 
 PermissionsStartOnly=true
 StandardOutput=syslog
