@@ -1,10 +1,12 @@
 package port
 
 import (
+	"fmt"
 	"net"
+	"os"
 	"strconv"
+	"strings"
 
-	"github.com/mitchellh/go-ps"
 	"github.com/pkg/errors"
 )
 
@@ -37,34 +39,48 @@ func IsPortOpen(port string) bool {
 	return true
 }
 
-// GetMAgentPort returns the port at which m-agent is running. If the process is not running then an empty string is returned
+// GetMAgentPort returns the m-agent server port from the PORT config file
 func GetMAgentPort() (string, error) {
 
-	isProcess, err := isMAgentProcessRunning()
+	serverPortSlice, err := os.ReadFile("/etc/m-agent/PORT")
 	if err != nil {
-		return "", errors.Errorf("failed to check for m-agent process, err: %v", err)
+		return "", err
 	}
 
-	if !isProcess {
-		return "", nil
-	}
-
-	return "[PORT]", nil
+	return strings.TrimSuffix(string(serverPortSlice), "\n"), nil
 }
 
-func isMAgentProcessRunning() (bool, error) {
+// UpdateMAgentPort updates the m-agent server port by updating the PORT config file
+func UpdateMAgentPort(newPort string) error {
 
-	processes, err := ps.Processes()
+	if !IsPortValid(newPort) {
+		return errors.Errorf("invalid port")
+	}
+
+	if !IsPortOpen(newPort) {
+		return errors.Errorf("port unavailable")
+	}
+
+	f, err := os.OpenFile("/etc/eg/PORT", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
 	if err != nil {
-		return false, err
+		return err
 	}
 
-	for _, p := range processes {
+	defer f.Close()
 
-		if p.Executable() == "m-agent" {
-			return true, nil
-		}
+	if err := f.Truncate(0); err != nil {
+		return err
 	}
 
-	return false, nil
+	_, err = f.Seek(0, 0)
+	if err != nil {
+		return err
+	}
+
+	_, err = fmt.Fprintf(f, "%s", newPort+"\n")
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

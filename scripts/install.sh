@@ -6,6 +6,7 @@
 : ${M_AGENT_INSTALL_DIR:="/usr/local/bin"}
 : ${SERVICE_NAME:="m-agent.service"}
 : ${SERVICE_DIR:="/etc/systemd/system"}
+: ${PORT:="41365"}
 
 HAS_CURL="$(type "curl" &> /dev/null && echo true || echo false)"
 HAS_WGET="$(type "wget" &> /dev/null && echo true || echo false)"
@@ -59,8 +60,8 @@ verifySupported() {
     exit 1
   fi
 
-  if [ "$(netstat -tulpn | grep "41365")" != "" ]; then
-    echo "41365 port is not available"
+  if [ "$(netstat -tulpn | grep $PORT)" != "" ]; then
+    echo "$PORT port is not available"
     exit 1
   fi
 }
@@ -128,6 +129,12 @@ installFile() {
   echo "Preparing to install $BINARY_NAME into ${M_AGENT_INSTALL_DIR}"
   runAsRoot cp "$M_AGENT_TMP_BIN" "$M_AGENT_INSTALL_DIR/$BINARY_NAME"
   echo "$BINARY_NAME installed into $M_AGENT_INSTALL_DIR/$BINARY_NAME"
+}
+
+createConfigFile() {
+  runAsRoot mkdir "/etc/$BINARY_NAME"
+  runAsRoot echo $PORT > "$M_AGENT_TMP_ROOT/PORT"
+  runAsRoot cp "$M_AGENT_TMP_ROOT/PORT" "/etc/$BINARY_NAME/"
 }
 
 # setupService downloads the service unit file, set it up and start the service
@@ -203,6 +210,9 @@ while [[ $# -gt 0 ]]; do
            echo -e "Please provide the desired version. e.g. --version v3.0.0 or -v canary"
            exit 0
        fi
+       ;;
+    '--port')
+       PORT=$2
        ;;
     '--no-sudo')
        USE_SUDO="false"

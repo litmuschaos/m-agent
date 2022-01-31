@@ -27,7 +27,7 @@ func main() {
 
 	generateToken := flag.Bool("get-token", false, "generates a token to be used for the authentication of the requests made to the agent")
 	tokenExpiryDuration := flag.String("token-expiry-duration", "", "token expiry duration (non-interactive mode)")
-	serverPort := flag.String("port", "", "port for m-agent")
+	updatePort := flag.String("update-port", "", "update the m-agent server port")
 	flag.Parse()
 
 	if *generateToken {
@@ -47,37 +47,28 @@ func main() {
 				tokenErrorLogger.Println(err)
 			}
 		}
+	} else if *updatePort != "" {
+
+		if err := port.UpdateMAgentPort(*updatePort); err != nil {
+			log.Printf("Unable to update port, err: %v", err)
+		}
 	} else {
 
-		// if port.IsPortOpen("41365") {
+		serverPort, err := port.GetMAgentPort()
+		if err != nil {
+			log.Println(err)
+			return
+		}
 
-		// 	// handle client requests
-		// 	if err := server.HandleRequests(); err != nil {
-		// 		log.Fatal(err)
-		// 	}
-		// } else {
+		if port.IsPortOpen(serverPort) {
 
-		// 	// port is not open i.e. daemon is already running
-		// 	flag.Usage()
-		// }
-
-		if *serverPort != "" {
-			// maybe not necessary
-			if !port.IsPortValid(*serverPort) {
-				log.Fatalf("%v port is invalid", *serverPort)
-				return
-			}
-
-			if !port.IsPortOpen(*serverPort) {
-				log.Fatalf("%v port is not available", *serverPort)
-				return
-			}
-
-			if err := server.HandleRequests(*serverPort); err != nil {
-				log.Fatal(err)
+			// handle client requests
+			if err := server.HandleRequests(serverPort); err != nil {
+				log.Println(err)
 			}
 		} else {
 
+			// port is not open i.e. daemon is already running
 			flag.Usage()
 		}
 	}

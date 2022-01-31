@@ -37,5 +37,5 @@ func HandleRequests(port string) error {
 	router.Handle("/process-kill", auth.IsAuthorized(processKill.ProcessKill))
 	router.NotFoundHandler = http.HandlerFunc(fallbackRouteHandler)
 
-	return http.ListenAndServe(port, router)
+	return http.ListenAndServe(":"+port, router)
 }
