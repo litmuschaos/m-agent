@@ -42,3 +42,9 @@ func GetInvalidActionErrorLogger() *log.Logger {
 
 	return log.New(os.Stdout, errorcodes.GetInvalidActionErrorPrefix(), log.Ldate|log.Ltime|log.Lmsgprefix)
 }
+
+// GetChaosRemediationErrorLogger returns a logger for handling chaos remediation errors
+func GetChaosRemediationErrorLogger() *log.Logger {
+
+	return log.New(os.Stdout, errorcodes.GetChaosRemediationErrorPrefix(), log.Ldate|log.Ltime|log.Lmsgprefix)
+}

@@ -34,6 +34,9 @@ const (
 
 	invalidActionErrorCode   = "1006"
 	invalidActionErrorString = "INVALID_ACTION_ERROR"
+
+	chaosRemediationErrorCode   = "1007"
+	chaosRemediationErrorString = "CHAOS_REMEDIATION_ERROR"
 )
 
 func GetTokenErrorPrefix() string {
@@ -62,4 +65,8 @@ func GetCommandProbeExecutionErrorPrefix() string {
 
 func GetInvalidActionErrorPrefix() string {
 	return invalidActionErrorCode + ": " + invalidActionErrorString + ": "
+}
+
+func GetChaosRemediationErrorPrefix() string {
+	return chaosRemediationErrorCode + ": " + chaosRemediationErrorString + ": "
 }
