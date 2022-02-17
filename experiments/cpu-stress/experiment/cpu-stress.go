@@ -71,7 +71,7 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 			}
 
 		case "EXECUTE_EXPERIMENT":
-			cmd, err = cpu.StressCpu(payload, &stdout, &stderr)
+			cmd, err = cpu.StressCpu(payload, &stdout, &stderr, conn)
 			if err != nil {
 				if err := messages.SendMessageToClient(conn, "ERROR", errorcodes.GetExecuteExperimentErrorPrefix()+err.Error()); err != nil {
 					executeExperimentErrorLogger.Printf("Error occured while sending error message to client, %v", err)
