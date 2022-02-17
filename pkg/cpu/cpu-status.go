@@ -20,9 +20,9 @@ func CheckForStressNG() error {
 	return nil
 }
 
-// CheckForStressNGProcess checks if the stress-ng process has successfully exited or not
+// AbortStressNGProcess checks if the stress-ng process has successfully exited or not.
 // If the process is still running then it forcefully kills the process and returns
-func CheckForStressNGProcess(cmd *exec.Cmd, stderr bytes.Buffer) error {
+func AbortStressNGProcess(cmd *exec.Cmd, stderr bytes.Buffer) error {
 
 	if !cmd.ProcessState.Exited() {
 

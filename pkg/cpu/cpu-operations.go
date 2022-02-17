@@ -8,10 +8,12 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/litmuschaos/m-agent/internal/m-agent/messages"
+
+	"github.com/pkg/errors"
 )
 
-// StressCpu starts a stress-ng process in background and returns the exec cmd for it
-func StressCpu(payload []byte, stdout, stderr *bytes.Buffer, conn *websocket.Conn) (*exec.Cmd, error) {
+// StressCPU starts a stress-ng process in background and returns the exec cmd for it
+func StressCPU(payload []byte, stdout, stderr *bytes.Buffer, conn *websocket.Conn) (*exec.Cmd, error) {
 
 	type CPUStressParams struct {
 		Workers string
@@ -37,13 +39,17 @@ func StressCpu(payload []byte, stdout, stderr *bytes.Buffer, conn *websocket.Con
 
 	// return cmd, nil
 
-	go func(cmd *exec.Cmd) {
+	go func(cmd *exec.Cmd, stderr *bytes.Buffer) {
 
 		if err := cmd.Run(); err != nil {
-			messages.SendMessageToClient(conn, "ERROR", err.Error())
+
+			messages.SendMessageToClient(conn, "ERROR", errors.Errorf("stress-ng process failed during execution, err: %s; stderr: %s", err.Error(), stderr.String()))
+
+			conn.Close()
 		}
 
-	}(cmd)
+		messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", messages.Message{})
+	}(cmd, stderr)
 
 	return cmd, nil
 }

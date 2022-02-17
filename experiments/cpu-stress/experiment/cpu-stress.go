@@ -71,7 +71,7 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 			}
 
 		case "EXECUTE_EXPERIMENT":
-			cmd, err = cpu.StressCpu(payload, &stdout, &stderr, conn)
+			cmd, err = cpu.StressCPU(payload, &stdout, &stderr, conn)
 			if err != nil {
 				if err := messages.SendMessageToClient(conn, "ERROR", errorcodes.GetExecuteExperimentErrorPrefix()+err.Error()); err != nil {
 					executeExperimentErrorLogger.Printf("Error occured while sending error message to client, %v", err)
@@ -103,13 +103,13 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-		case "CHECK_STRESS_PROCESS":
-			if err := cpu.CheckForStressNGProcess(cmd, stderr); err != nil {
+		case "ABORT_STRESS_PROCESS":
+			if err := cpu.AbortStressNGProcess(cmd, stderr); err != nil {
 				if err := messages.SendMessageToClient(conn, "ERROR", errorcodes.GetChaosRemediationErrorPrefix()+err.Error()); err != nil {
 					chaosRemediationErrorLogger.Printf("Error occured while sending error message to client, %v", err)
-					conn.Close()
-					return
 				}
+				conn.Close()
+				return
 			}
 
 			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", stdout.String()); err != nil {
