@@ -35,8 +35,11 @@ const (
 	invalidActionErrorCode   = "1006"
 	invalidActionErrorString = "INVALID_ACTION_ERROR"
 
-	chaosRemediationErrorCode   = "1007"
-	chaosRemediationErrorString = "CHAOS_REMEDIATION_ERROR"
+	chaosAbortErrorCode   = "1007"
+	chaosAbortErrorString = "CHAOS_ABORT_ERROR"
+
+	livenessCheckErrorCode   = "1008"
+	livenessCheckErrorString = "LIVENESS_CHECK_ERROR"
 )
 
 func GetTokenErrorPrefix() string {
@@ -67,6 +70,10 @@ func GetInvalidActionErrorPrefix() string {
 	return invalidActionErrorCode + ": " + invalidActionErrorString + ": "
 }
 
-func GetChaosRemediationErrorPrefix() string {
-	return chaosRemediationErrorCode + ": " + chaosRemediationErrorString + ": "
+func GetChaosAbortErrorPrefix() string {
+	return chaosAbortErrorCode + ": " + chaosAbortErrorString + ": "
+}
+
+func GetLivenessCheckErrorPrefix() string {
+	return livenessCheckErrorCode + ": " + livenessCheckErrorString + ": "
 }

@@ -1,6 +1,7 @@
 package cpu
 
 import (
+	"bytes"
 	"os/exec"
 	"syscall"
 
@@ -30,6 +31,17 @@ func AbortStressNGProcess(cmd *exec.Cmd) error {
 		}
 
 		return nil
+	}
+
+	return nil
+}
+
+// CheckStressNGProcessLiveness checks if the stress-ng process is still running or not.
+// It returns an error if any abnormal exit of the process takes place
+func CheckStressNGProcessLiveness(cmd *exec.Cmd, stderr *bytes.Buffer) error {
+
+	if cmd.ProcessState.Exited() && !cmd.ProcessState.Success() {
+		return errors.Errorf("stress-ng process exited with %s exit code, err: %s", cmd.ProcessState.ExitCode(), stderr.String())
 	}
 
 	return nil

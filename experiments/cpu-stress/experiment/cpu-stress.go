@@ -1,6 +1,7 @@
 package experiment
 
 import (
+	"bytes"
 	"log"
 	"net/http"
 	"os/exec"
@@ -13,7 +14,11 @@ import (
 	"github.com/litmuschaos/m-agent/pkg/probes"
 )
 
-var cmd *exec.Cmd
+var (
+	stdout bytes.Buffer
+	stderr bytes.Buffer
+	cmd    *exec.Cmd
+)
 
 // CPUStress listens for the client actions and executes them as appropriate
 func CPUStress(w http.ResponseWriter, r *http.Request) {
@@ -26,7 +31,8 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 	executeExperimentErrorLogger := logger.GetExecuteExperimentErrorLogger()
 	commandProbeExecutionErrorLogger := logger.GetCommandProbeExecutionErrorLogger()
 	invalidActionErrorLogger := logger.GetCommandProbeExecutionErrorLogger()
-	chaosRemediationErrorLogger := logger.GetChaosRemediationErrorLogger()
+	chaosAbortErrorLogger := logger.GetChaosAbortErrorLogger()
+	livenessCheckErrorLogger := logger.GetLivenessCheckErrorLogger()
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -67,7 +73,7 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 			}
 
 		case "EXECUTE_EXPERIMENT":
-			cmd, err = cpu.StressCPU(payload, reqID, conn)
+			cmd, err = cpu.StressCPU(payload, reqID, &stdout, &stderr, conn)
 			if err != nil {
 				if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetExecuteExperimentErrorPrefix()+err.Error()); err != nil {
 					executeExperimentErrorLogger.Printf("Error occured while sending error message to client, %v", err)
@@ -78,6 +84,21 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 
 			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, messages.Message{}); err != nil {
 				executeExperimentErrorLogger.Printf("Error occured while sending feedback message to client, %v", err)
+				conn.Close()
+				return
+			}
+
+		case "CHECK_LIVENESS":
+			if err := cpu.CheckStressNGProcessLiveness(cmd, &stderr); err != nil {
+				if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetLivenessCheckErrorPrefix()+err.Error()); err != nil {
+					executeExperimentErrorLogger.Printf("Error occured while sending error message to client, %v", err)
+				}
+				conn.Close()
+				return
+			}
+
+			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, messages.Message{}); err != nil {
+				livenessCheckErrorLogger.Printf("Error occured while sending feedback message to client, %v", err)
 				conn.Close()
 				return
 			}
@@ -101,15 +122,15 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 
 		case "ABORT_EXPERIMENT":
 			if err := cpu.AbortStressNGProcess(cmd); err != nil {
-				if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetChaosRemediationErrorPrefix()+err.Error()); err != nil {
-					chaosRemediationErrorLogger.Printf("Error occured while sending error message to client, %v", err)
+				if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetChaosAbortErrorPrefix()+err.Error()); err != nil {
+					chaosAbortErrorLogger.Printf("Error occured while sending error message to client, %v", err)
 				}
 				conn.Close()
 				return
 			}
 
 			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, messages.Message{}); err != nil {
-				chaosRemediationErrorLogger.Printf("Error occured while sending feedback message to client, %v", err)
+				chaosAbortErrorLogger.Printf("Error occured while sending feedback message to client, %v", err)
 				conn.Close()
 				return
 			}
