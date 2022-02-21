@@ -31,7 +31,7 @@ func fallbackRouteHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // HandleRequests listens for requests made by the clients at any specified route
-func HandleRequests() error {
+func HandleRequests(port string) error {
 
 	router := mux.NewRouter()
 
@@ -39,5 +39,5 @@ func HandleRequests() error {
 	router.Handle("/cpu-stress", auth.IsAuthorized(cpuStress.CPUStress))
 	router.NotFoundHandler = http.HandlerFunc(fallbackRouteHandler)
 
-	return http.ListenAndServe(":41365", router)
+	return http.ListenAndServe(":"+port, router)
 }

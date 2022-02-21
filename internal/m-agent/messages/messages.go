@@ -22,27 +22,28 @@ import (
 type Message struct {
 	Action  string      `json:"action"`
 	Payload interface{} `json:"body"`
+	ReqID   string      `json:"reqid"`
 }
 
 // ListenForClientMessage listens for client messages and returns the received message action and payload
-func ListenForClientMessage(conn *websocket.Conn) (string, []byte, error) {
+func ListenForClientMessage(conn *websocket.Conn) (string, string, []byte, error) {
 
 	var msg Message
 
 	if err := conn.ReadJSON(&msg); err != nil {
-		return "", []byte{}, err
+		return "", "", []byte{}, err
 	}
 
 	payload, err := json.Marshal(msg.Payload)
 	if err != nil {
-		return "", []byte{}, err
+		return "", "", []byte{}, err
 	}
 
-	return msg.Action, payload, nil
+	return msg.Action, msg.ReqID, payload, nil
 }
 
 // SendMessageToClient wraps a message action and payload in a Message structure and sends it to the client
-func SendMessageToClient(conn *websocket.Conn, action string, payload interface{}) error {
+func SendMessageToClient(conn *websocket.Conn, action, reqID string, payload interface{}) error {
 
-	return conn.WriteJSON(Message{action, payload})
+	return conn.WriteJSON(Message{action, payload, reqID})
 }

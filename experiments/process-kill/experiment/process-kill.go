@@ -45,9 +45,9 @@ func ProcessKill(w http.ResponseWriter, r *http.Request) {
 
 	for {
 
-		action, payload, err := messages.ListenForClientMessage(conn)
+		action, reqID, payload, err := messages.ListenForClientMessage(conn)
 		if err != nil {
-			if err := messages.SendMessageToClient(conn, "ERROR", errorcodes.GetClientMessageReadErrorPrefix()+err.Error()); err != nil {
+			if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetClientMessageReadErrorPrefix()+err.Error()); err != nil {
 
 				clientMessageReadLogger.Printf("Error occured while sending error message to client, %v", err)
 			}
@@ -60,7 +60,7 @@ func ProcessKill(w http.ResponseWriter, r *http.Request) {
 		case "CHECK_STEADY_STATE":
 			if err := process.ProcessStateCheck(payload); err != nil {
 
-				if err := messages.SendMessageToClient(conn, "ERROR", errorcodes.GetSteadyStateCheckErrorPrefix()+err.Error()); err != nil {
+				if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetSteadyStateCheckErrorPrefix()+err.Error()); err != nil {
 					steadyStateCheckErrorLogger.Printf("Error occured while sending error message to client, %v", err)
 				}
 
@@ -68,7 +68,7 @@ func ProcessKill(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", messages.Message{}); err != nil {
+			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, messages.Message{}); err != nil {
 
 				steadyStateCheckErrorLogger.Printf("Error occured while sending feedback message to client, %v", err)
 				conn.Close()
@@ -77,14 +77,14 @@ func ProcessKill(w http.ResponseWriter, r *http.Request) {
 
 		case "EXECUTE_EXPERIMENT":
 			if err := process.KillTargetProcesses(payload); err != nil {
-				if err := messages.SendMessageToClient(conn, "ERROR", errorcodes.GetExecuteExperimentErrorPrefix()+err.Error()); err != nil {
+				if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetExecuteExperimentErrorPrefix()+err.Error()); err != nil {
 					executeExperimentErrorLogger.Printf("Error occured while sending error message to client, %v", err)
 				}
 				conn.Close()
 				return
 			}
 
-			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", messages.Message{}); err != nil {
+			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, messages.Message{}); err != nil {
 				executeExperimentErrorLogger.Printf("Error occured while sending feedback message to client, %v", err)
 				conn.Close()
 				return
@@ -94,21 +94,21 @@ func ProcessKill(w http.ResponseWriter, r *http.Request) {
 			stdout, err := probes.ExecuteCmdProbeCommand(payload)
 
 			if err != nil {
-				if err := messages.SendMessageToClient(conn, "ERROR", errorcodes.GetCommandProbeExecutionErrorPrefix()+err.Error()); err != nil {
+				if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetCommandProbeExecutionErrorPrefix()+err.Error()); err != nil {
 					commandProbeExecutionErrorLogger.Printf("Error occured while sending error message to client, %v", err)
 					conn.Close()
 					return
 				}
 			}
 
-			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", stdout); err != nil {
+			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, stdout); err != nil {
 				commandProbeExecutionErrorLogger.Printf("Error occured while sending feedback message to client, %v", err)
 				conn.Close()
 				return
 			}
 
 		default:
-			if err := messages.SendMessageToClient(conn, "ERROR", errorcodes.GetInvalidActionErrorPrefix()+"Invalid action: "+action); err != nil {
+			if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetInvalidActionErrorPrefix()+"Invalid action: "+action); err != nil {
 				invalidActionErrorLogger.Printf("Error occured while sending error message to client, %v", err)
 			}
 			conn.Close()

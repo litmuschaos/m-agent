@@ -6,6 +6,7 @@
 : ${M_AGENT_INSTALL_DIR:="/usr/local/bin"}
 : ${SERVICE_NAME:="m-agent.service"}
 : ${SERVICE_DIR:="/etc/systemd/system"}
+: ${PORT:="41365"}
 
 HAS_CURL="$(type "curl" &> /dev/null && echo true || echo false)"
 HAS_WGET="$(type "wget" &> /dev/null && echo true || echo false)"
@@ -59,8 +60,8 @@ verifySupported() {
     exit 1
   fi
 
-  if [ "$(netstat -tulpn | grep "41365")" != "" ]; then
-    echo "41365 port is not available"
+  if [ "$(netstat -tulpn | grep $PORT)" != "" ]; then
+    echo "$PORT port is not available"
     exit 1
   fi
 }
@@ -130,6 +131,13 @@ installFile() {
   echo "$BINARY_NAME installed into $M_AGENT_INSTALL_DIR/$BINARY_NAME"
 }
 
+createConfigFile() {
+  runAsRoot mkdir "/etc/$BINARY_NAME"
+  runAsRoot echo $PORT > "$M_AGENT_TMP_ROOT/PORT"
+  runAsRoot cp "$M_AGENT_TMP_ROOT/PORT" "/etc/$BINARY_NAME/"
+  echo "$BINARY_NAME server PORT config file created"
+}
+
 # setupService downloads the service unit file, set it up and start the service
 setupService() {
   M_AGENT_TMP_SERVICE="$M_AGENT_TMP_ROOT/$SERVICE_NAME"
@@ -170,6 +178,7 @@ help () {
   echo -e "\t[--version|-v <desired_version>] . When not defined it fetches the latest release from GitHub"
   echo -e "\te.g. --version v3.0.0 or -v canary"
   echo -e "\t[--no-sudo]  ->> install without sudo"
+  echo -e "\t[--port|-p <port>] ->> custom port for m-agent server"
 }
 
 # cleanup temporary files 
@@ -204,6 +213,15 @@ while [[ $# -gt 0 ]]; do
            exit 0
        fi
        ;;
+    '--port'|-p)
+       shift
+       if [[ $# -ne 0 ]]; then
+          PORT="${1}"
+       else
+          echo -e "Please provide the port for m-agent server. e.g. 41365"
+          exit 0
+       fi
+       ;;
     '--no-sudo')
        USE_SUDO="false"
        ;;
@@ -225,6 +243,7 @@ checkDesiredVersion
 if ! isMAgentInstalled; then
   downloadFile
   installFile
+  createConfigFile
   setupService
 fi
 cleanup
