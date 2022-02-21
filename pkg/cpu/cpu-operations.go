@@ -13,7 +13,7 @@ import (
 )
 
 // StressCPU starts a stress-ng process in background and returns the exec cmd for it
-func StressCPU(payload []byte, conn *websocket.Conn) (*exec.Cmd, error) {
+func StressCPU(payload []byte, reqID string, conn *websocket.Conn) (*exec.Cmd, error) {
 
 	var (
 		stdout bytes.Buffer
@@ -48,12 +48,12 @@ func StressCPU(payload []byte, conn *websocket.Conn) (*exec.Cmd, error) {
 
 		if err := cmd.Run(); err != nil {
 
-			messages.SendMessageToClient(conn, "ERROR", errors.Errorf("stress-ng process failed during execution, err: %s; stderr: %s", err.Error(), stderr.String()))
+			messages.SendMessageToClient(conn, "ERROR", reqID, errors.Errorf("stress-ng process failed during execution, err: %s; stderr: %s", err.Error(), stderr.String()))
 
 			conn.Close()
 		}
 
-		messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", stdout.String())
+		messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, stdout.String())
 	}(cmd, &stderr, &stdout)
 
 	return cmd, nil

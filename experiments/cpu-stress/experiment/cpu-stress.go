@@ -36,9 +36,9 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 
 	for {
 
-		action, payload, err := messages.ListenForClientMessage(conn)
+		action, reqID, payload, err := messages.ListenForClientMessage(conn)
 		if err != nil {
-			if err := messages.SendMessageToClient(conn, "ERROR", errorcodes.GetClientMessageReadErrorPrefix()+err.Error()); err != nil {
+			if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetClientMessageReadErrorPrefix()+err.Error()); err != nil {
 
 				clientMessageReadLogger.Printf("Error occured while sending error message to client, %v", err)
 			}
@@ -51,7 +51,7 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 		case "CHECK_STEADY_STATE":
 			if err := cpu.CheckForStressNG(); err != nil {
 
-				if err := messages.SendMessageToClient(conn, "ERROR", errorcodes.GetSteadyStateCheckErrorPrefix()+err.Error()); err != nil {
+				if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetSteadyStateCheckErrorPrefix()+err.Error()); err != nil {
 					steadyStateCheckErrorLogger.Printf("Error occured while sending error message to client, %v", err)
 				}
 
@@ -59,7 +59,7 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", messages.Message{}); err != nil {
+			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, messages.Message{}); err != nil {
 
 				steadyStateCheckErrorLogger.Printf("Error occured while sending feedback message to client, %v", err)
 				conn.Close()
@@ -67,16 +67,16 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 			}
 
 		case "EXECUTE_EXPERIMENT":
-			cmd, err = cpu.StressCPU(payload, conn)
+			cmd, err = cpu.StressCPU(payload, reqID, conn)
 			if err != nil {
-				if err := messages.SendMessageToClient(conn, "ERROR", errorcodes.GetExecuteExperimentErrorPrefix()+err.Error()); err != nil {
+				if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetExecuteExperimentErrorPrefix()+err.Error()); err != nil {
 					executeExperimentErrorLogger.Printf("Error occured while sending error message to client, %v", err)
 				}
 				conn.Close()
 				return
 			}
 
-			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", messages.Message{}); err != nil {
+			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, messages.Message{}); err != nil {
 				executeExperimentErrorLogger.Printf("Error occured while sending feedback message to client, %v", err)
 				conn.Close()
 				return
@@ -86,14 +86,14 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 			cmdProbeStdout, err := probes.ExecuteCmdProbeCommand(payload)
 
 			if err != nil {
-				if err := messages.SendMessageToClient(conn, "ERROR", errorcodes.GetCommandProbeExecutionErrorPrefix()+err.Error()); err != nil {
+				if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetCommandProbeExecutionErrorPrefix()+err.Error()); err != nil {
 					commandProbeExecutionErrorLogger.Printf("Error occured while sending error message to client, %v", err)
 					conn.Close()
 					return
 				}
 			}
 
-			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", cmdProbeStdout); err != nil {
+			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, cmdProbeStdout); err != nil {
 				commandProbeExecutionErrorLogger.Printf("Error occured while sending feedback message to client, %v", err)
 				conn.Close()
 				return
@@ -101,21 +101,21 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 
 		case "ABORT_EXPERIMENT":
 			if err := cpu.AbortStressNGProcess(cmd); err != nil {
-				if err := messages.SendMessageToClient(conn, "ERROR", errorcodes.GetChaosRemediationErrorPrefix()+err.Error()); err != nil {
+				if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetChaosRemediationErrorPrefix()+err.Error()); err != nil {
 					chaosRemediationErrorLogger.Printf("Error occured while sending error message to client, %v", err)
 				}
 				conn.Close()
 				return
 			}
 
-			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", messages.Message{}); err != nil {
+			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, messages.Message{}); err != nil {
 				chaosRemediationErrorLogger.Printf("Error occured while sending feedback message to client, %v", err)
 				conn.Close()
 				return
 			}
 
 		default:
-			if err := messages.SendMessageToClient(conn, "ERROR", errorcodes.GetInvalidActionErrorPrefix()+"Invalid action: "+action); err != nil {
+			if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetInvalidActionErrorPrefix()+"Invalid action: "+action); err != nil {
 				invalidActionErrorLogger.Printf("Error occured while sending error message to client, %v", err)
 			}
 			conn.Close()
