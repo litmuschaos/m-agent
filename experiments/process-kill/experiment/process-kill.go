@@ -36,6 +36,7 @@ func ProcessKill(w http.ResponseWriter, r *http.Request) {
 	executeExperimentErrorLogger := logger.GetExecuteExperimentErrorLogger()
 	commandProbeExecutionErrorLogger := logger.GetCommandProbeExecutionErrorLogger()
 	invalidActionErrorLogger := logger.GetCommandProbeExecutionErrorLogger()
+	livenessCheckErrorLogger := logger.GetLivenessCheckErrorLogger()
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -68,7 +69,7 @@ func ProcessKill(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, messages.Message{}); err != nil {
+			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, nil); err != nil {
 
 				steadyStateCheckErrorLogger.Printf("Error occured while sending feedback message to client, %v", err)
 				conn.Close()
@@ -84,7 +85,7 @@ func ProcessKill(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, messages.Message{}); err != nil {
+			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, nil); err != nil {
 				executeExperimentErrorLogger.Printf("Error occured while sending feedback message to client, %v", err)
 				conn.Close()
 				return
@@ -103,6 +104,13 @@ func ProcessKill(w http.ResponseWriter, r *http.Request) {
 
 			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, stdout); err != nil {
 				commandProbeExecutionErrorLogger.Printf("Error occured while sending feedback message to client, %v", err)
+				conn.Close()
+				return
+			}
+
+		case "CHECK_LIVENESS":
+			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, nil); err != nil {
+				livenessCheckErrorLogger.Printf("Error occured while sending feedback message to client, %v", err)
 				conn.Close()
 				return
 			}

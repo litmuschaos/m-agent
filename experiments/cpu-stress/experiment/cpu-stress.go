@@ -65,7 +65,7 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, messages.Message{}); err != nil {
+			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, nil); err != nil {
 
 				steadyStateCheckErrorLogger.Printf("Error occured while sending feedback message to client, %v", err)
 				conn.Close()
@@ -82,7 +82,7 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, messages.Message{}); err != nil {
+			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, nil); err != nil {
 				executeExperimentErrorLogger.Printf("Error occured while sending feedback message to client, %v", err)
 				conn.Close()
 				return
@@ -97,7 +97,7 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, messages.Message{}); err != nil {
+			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, nil); err != nil {
 				livenessCheckErrorLogger.Printf("Error occured while sending feedback message to client, %v", err)
 				conn.Close()
 				return
@@ -129,7 +129,7 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, messages.Message{}); err != nil {
+			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, nil); err != nil {
 				chaosAbortErrorLogger.Printf("Error occured while sending feedback message to client, %v", err)
 				conn.Close()
 				return
