@@ -1,7 +1,6 @@
 package cpu
 
 import (
-	"bytes"
 	"os/exec"
 	"syscall"
 
@@ -22,7 +21,7 @@ func CheckForStressNG() error {
 
 // AbortStressNGProcess checks if the stress-ng process has successfully exited or not.
 // If the process is still running then it forcefully kills the process and returns
-func AbortStressNGProcess(cmd *exec.Cmd, stderr bytes.Buffer) error {
+func AbortStressNGProcess(cmd *exec.Cmd) error {
 
 	if !cmd.ProcessState.Exited() {
 
@@ -31,10 +30,6 @@ func AbortStressNGProcess(cmd *exec.Cmd, stderr bytes.Buffer) error {
 		}
 
 		return nil
-	}
-
-	if !cmd.ProcessState.Success() {
-		return errors.Errorf("stress-ng process failed during execution with %v exit code, err: %v", cmd.ProcessState.ExitCode(), stderr.String())
 	}
 
 	return nil

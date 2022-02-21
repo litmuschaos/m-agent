@@ -1,7 +1,6 @@
 package experiment
 
 import (
-	"bytes"
 	"log"
 	"net/http"
 	"os/exec"
@@ -14,10 +13,7 @@ import (
 	"github.com/litmuschaos/m-agent/pkg/probes"
 )
 
-var (
-	cmd            *exec.Cmd
-	stdout, stderr bytes.Buffer
-)
+var cmd *exec.Cmd
 
 // CPUStress listens for the client actions and executes them as appropriate
 func CPUStress(w http.ResponseWriter, r *http.Request) {
@@ -71,7 +67,7 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 			}
 
 		case "EXECUTE_EXPERIMENT":
-			cmd, err = cpu.StressCPU(payload, &stdout, &stderr, conn)
+			cmd, err = cpu.StressCPU(payload, conn)
 			if err != nil {
 				if err := messages.SendMessageToClient(conn, "ERROR", errorcodes.GetExecuteExperimentErrorPrefix()+err.Error()); err != nil {
 					executeExperimentErrorLogger.Printf("Error occured while sending error message to client, %v", err)
@@ -103,8 +99,8 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-		case "ABORT_STRESS_PROCESS":
-			if err := cpu.AbortStressNGProcess(cmd, stderr); err != nil {
+		case "ABORT_EXPERIMENT":
+			if err := cpu.AbortStressNGProcess(cmd); err != nil {
 				if err := messages.SendMessageToClient(conn, "ERROR", errorcodes.GetChaosRemediationErrorPrefix()+err.Error()); err != nil {
 					chaosRemediationErrorLogger.Printf("Error occured while sending error message to client, %v", err)
 				}
@@ -112,7 +108,7 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", stdout.String()); err != nil {
+			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", messages.Message{}); err != nil {
 				chaosRemediationErrorLogger.Printf("Error occured while sending feedback message to client, %v", err)
 				conn.Close()
 				return

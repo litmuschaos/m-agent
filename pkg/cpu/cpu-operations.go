@@ -13,7 +13,12 @@ import (
 )
 
 // StressCPU starts a stress-ng process in background and returns the exec cmd for it
-func StressCPU(payload []byte, stdout, stderr *bytes.Buffer, conn *websocket.Conn) (*exec.Cmd, error) {
+func StressCPU(payload []byte, conn *websocket.Conn) (*exec.Cmd, error) {
+
+	var (
+		stdout bytes.Buffer
+		stderr bytes.Buffer
+	)
 
 	type CPUStressParams struct {
 		Workers string
@@ -30,8 +35,8 @@ func StressCPU(payload []byte, stdout, stderr *bytes.Buffer, conn *websocket.Con
 	stressCommand := fmt.Sprintf("stress-ng --cpu %s --cpu-load %s --timeout %s", cpuStressParams.Workers, cpuStressParams.Load, cpuStressParams.Timeout)
 
 	cmd := exec.Command("bash", "-c", stressCommand)
-	cmd.Stdout = stdout
-	cmd.Stderr = stderr
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
 
 	// if err := cmd.Start(); err != nil {
 	// 	return nil, errors.Errorf("%s, stderr: %s", err, stderr.String())
@@ -39,7 +44,7 @@ func StressCPU(payload []byte, stdout, stderr *bytes.Buffer, conn *websocket.Con
 
 	// return cmd, nil
 
-	go func(cmd *exec.Cmd, stderr *bytes.Buffer) {
+	go func(cmd *exec.Cmd, stderr, stdout *bytes.Buffer) {
 
 		if err := cmd.Run(); err != nil {
 
@@ -48,8 +53,8 @@ func StressCPU(payload []byte, stdout, stderr *bytes.Buffer, conn *websocket.Con
 			conn.Close()
 		}
 
-		messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", messages.Message{})
-	}(cmd, stderr)
+		messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", stdout.String())
+	}(cmd, &stderr, &stdout)
 
 	return cmd, nil
 }
