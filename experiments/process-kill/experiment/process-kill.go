@@ -49,7 +49,6 @@ func ProcessKill(w http.ResponseWriter, r *http.Request) {
 		action, reqID, payload, err := messages.ListenForClientMessage(conn)
 		if err != nil {
 			if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetClientMessageReadErrorPrefix()+err.Error()); err != nil {
-
 				clientMessageReadLogger.Printf("Error occured while sending error message to client, %v", err)
 			}
 			conn.Close()
@@ -60,17 +59,14 @@ func ProcessKill(w http.ResponseWriter, r *http.Request) {
 
 		case "CHECK_STEADY_STATE":
 			if err := process.ProcessStateCheck(payload); err != nil {
-
 				if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetSteadyStateCheckErrorPrefix()+err.Error()); err != nil {
 					steadyStateCheckErrorLogger.Printf("Error occured while sending error message to client, %v", err)
 				}
-
 				conn.Close()
 				return
 			}
 
 			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, nil); err != nil {
-
 				steadyStateCheckErrorLogger.Printf("Error occured while sending feedback message to client, %v", err)
 				conn.Close()
 				return
