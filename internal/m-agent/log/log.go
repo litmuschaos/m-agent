@@ -49,7 +49,14 @@ func GetChaosAbortErrorLogger() *log.Logger {
 	return log.New(os.Stdout, errorcodes.GetChaosAbortErrorPrefix(), log.Ldate|log.Ltime|log.Lmsgprefix)
 }
 
+// GetLivenessCheckErrorLogger returns a logger for handling liveness check errors
 func GetLivenessCheckErrorLogger() *log.Logger {
 
 	return log.New(os.Stdout, errorcodes.GetLivenessCheckErrorPrefix(), log.Ldate|log.Ltime|log.Lmsgprefix)
+}
+
+//GetCloseConnectionErrorLogger returns a logger for handling close connection errors
+func GetCloseConnectionErrorLogger() *log.Logger {
+
+	return log.New(os.Stdout, errorcodes.GetCloseConnectionErrorPrefix(), log.Ldate|log.Ltime|log.Lmsgprefix)
 }

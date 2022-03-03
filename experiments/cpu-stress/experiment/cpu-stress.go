@@ -33,6 +33,7 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 	invalidActionErrorLogger := logger.GetCommandProbeExecutionErrorLogger()
 	chaosAbortErrorLogger := logger.GetChaosAbortErrorLogger()
 	livenessCheckErrorLogger := logger.GetLivenessCheckErrorLogger()
+	closeConnectionErrorLogger := logger.GetCloseConnectionErrorLogger()
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -130,6 +131,16 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 				conn.Close()
 				return
 			}
+
+		case "CLOSE_CONNECTION":
+			if err := messages.SendMessageToClient(conn, "CLOSE_CONNECTION", reqID, nil); err != nil {
+				closeConnectionErrorLogger.Printf("Error occured while sending feedback message to client, %v", err)
+				conn.Close()
+				return
+			}
+
+			conn.Close()
+			return
 
 		default:
 			if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetInvalidActionErrorPrefix()+"Invalid action: "+action); err != nil {
