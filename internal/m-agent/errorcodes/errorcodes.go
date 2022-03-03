@@ -43,6 +43,9 @@ const (
 
 	closeConnectionErrorCode   = "2009"
 	closeConnectionErrorString = "CLOSE_CONNECTION_ERROR"
+
+	chaosRevertErrorCode   = "2010"
+	chaosRevertErrorString = "CHAOS_REVERT_ERROR"
 )
 
 func GetTokenErrorPrefix() string {
@@ -83,4 +86,8 @@ func GetLivenessCheckErrorPrefix() string {
 
 func GetCloseConnectionErrorPrefix() string {
 	return closeConnectionErrorCode + ": " + closeConnectionErrorString + ": "
+}
+
+func GetChaosRevertErrorPrefix() string {
+	return chaosRevertErrorCode + ": " + chaosRevertErrorString + ": "
 }

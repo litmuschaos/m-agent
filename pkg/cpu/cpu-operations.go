@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os/exec"
+	"syscall"
 
 	"github.com/gorilla/websocket"
 
@@ -37,18 +38,30 @@ func StressCPU(payload []byte, reqID string, stdout, stderr *bytes.Buffer, conn 
 	}
 
 	return cmd, nil
+}
 
-	// go func(cmd *exec.Cmd, stderr, stdout *bytes.Buffer) {
+// RevertStressNGProcess checks the stress-ng process exit code and cleans up the defunct process
+func RevertStressNGProcess(cmd *exec.Cmd, stderr *bytes.Buffer) error {
 
-	// 	if err := cmd.Run(); err != nil {
+	if err := cmd.Wait(); err != nil {
+		return errors.Errorf("stress-ng process exited with a non-zero exit code %d, stderr: %v", cmd.ProcessState.ExitCode(), stderr.String())
+	}
 
-	// 		messages.SendMessageToClient(conn, "ERROR", reqID, errors.Errorf("stress-ng process failed during execution, err: %s; stderr: %s", err.Error(), stderr.String()))
+	return nil
+}
 
-	// 		conn.Close()
-	// 	}
+// AbortStressNGProcess checks if the stress-ng process has successfully exited or not.
+// If the process is still running then it forcefully kills the process and returns
+func AbortStressNGProcess(cmd *exec.Cmd) error {
 
-	// 	messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, stdout.String())
-	// }(cmd, &stderr, &stdout)
+	if !cmd.ProcessState.Exited() {
 
-	// return cmd, nil
+		if err := syscall.Kill(cmd.Process.Pid, 9); err != nil {
+			return errors.Errorf("failed to force stop the stress-ng process, err: %v", err)
+		}
+
+		return nil
+	}
+
+	return nil
 }

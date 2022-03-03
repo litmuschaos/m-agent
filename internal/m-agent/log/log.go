@@ -60,3 +60,9 @@ func GetCloseConnectionErrorLogger() *log.Logger {
 
 	return log.New(os.Stdout, errorcodes.GetCloseConnectionErrorPrefix(), log.Ldate|log.Ltime|log.Lmsgprefix)
 }
+
+//GetChaosRevertErrorLogger returns a logger for handling chaos revert errors
+func GetChaosRevertErrorLogger() *log.Logger {
+
+	return log.New(os.Stdout, errorcodes.GetChaosRevertErrorPrefix(), log.Ldate|log.Ltime|log.Lmsgprefix)
+}

@@ -34,6 +34,7 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 	chaosAbortErrorLogger := logger.GetChaosAbortErrorLogger()
 	livenessCheckErrorLogger := logger.GetLivenessCheckErrorLogger()
 	closeConnectionErrorLogger := logger.GetCloseConnectionErrorLogger()
+	chaosRevertErrorLogger := logger.GetChaosRevertErrorLogger()
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -55,7 +56,7 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 		switch action {
 
 		case "CHECK_STEADY_STATE":
-			if err := cpu.CheckForStressNG(); err != nil {
+			if err := cpu.CheckStressNG(); err != nil {
 				if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetSteadyStateCheckErrorPrefix()+err.Error()); err != nil {
 					steadyStateCheckErrorLogger.Printf("Error occured while sending error message to client, %v", err)
 				}
@@ -86,7 +87,7 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 			}
 
 		case "CHECK_LIVENESS":
-			if err := cpu.CheckStressNGProcessLiveness(cmd, &stderr); err != nil {
+			if err := cpu.CheckStressNGProcess(cmd); err != nil {
 				if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetLivenessCheckErrorPrefix()+err.Error()); err != nil {
 					executeExperimentErrorLogger.Printf("Error occured while sending error message to client, %v", err)
 				}
@@ -113,6 +114,21 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 
 			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, cmdProbeStdout); err != nil {
 				commandProbeExecutionErrorLogger.Printf("Error occured while sending feedback message to client, %v", err)
+				conn.Close()
+				return
+			}
+
+		case "REVERT_CHAOS":
+			if err := cpu.RevertStressNGProcess(cmd, &stderr); err != nil {
+				if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetChaosRevertErrorPrefix()+err.Error()); err != nil {
+					executeExperimentErrorLogger.Printf("Error occured while sending error message to client, %v", err)
+				}
+				conn.Close()
+				return
+			}
+
+			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, stdout.String()); err != nil {
+				chaosRevertErrorLogger.Printf("Error occured while sending feedback message to client, %v", err)
 				conn.Close()
 				return
 			}
