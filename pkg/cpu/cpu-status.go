@@ -21,9 +21,11 @@ func CheckStressNG() error {
 }
 
 // CheckStressNGProcess checks if the stress-ng process is running
-func CheckStressNGProcess(cmd *exec.Cmd) error {
+func CheckStressNGProcess(pid int) error {
 
-	p, err := os.FindProcess(cmd.Process.Pid)
+	// On Unix systems, FindProcess always succeeds and returns a Process for
+	// the given pid, regardless of whether the process exists.
+	p, err := os.FindProcess(pid)
 	if err != nil {
 		return err
 	}

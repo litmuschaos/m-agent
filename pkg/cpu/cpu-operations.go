@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os/exec"
-	"syscall"
 
 	"github.com/gorilla/websocket"
 
@@ -40,27 +39,31 @@ func StressCPU(payload []byte, reqID string, stdout, stderr *bytes.Buffer, conn 
 	return cmd, nil
 }
 
-// RevertStressNGProcess checks the stress-ng process exit code and cleans up the defunct process
+// RevertStressNGProcess checks and reverts the defunct (zombie) stress-ng process
 func RevertStressNGProcess(cmd *exec.Cmd, stderr *bytes.Buffer) error {
 
 	if err := cmd.Wait(); err != nil {
-		return errors.Errorf("stress-ng process exited with a non-zero exit code %d, stderr: %v", cmd.ProcessState.ExitCode(), stderr.String())
+		return errors.Errorf("stress-ng process exited with a non-zero exit code: %d; stderr: %v", cmd.ProcessState.ExitCode(), stderr.String())
 	}
 
 	return nil
 }
 
-// AbortStressNGProcess checks if the stress-ng process has successfully exited or not.
-// If the process is still running then it forcefully kills the process and returns
+// AbortStressNGProcess kills a running stress-ng process, and if the
+// process has already completed, it clears the defunct (zombie) process
 func AbortStressNGProcess(cmd *exec.Cmd) error {
 
-	if !cmd.ProcessState.Exited() {
+	// kill the running stress-ng process to make it exit immediately
+	if err := cmd.Process.Kill(); err != nil {
+		return errors.Errorf("failed to kill the stress-ng process, err: %v", err)
+	}
 
-		if err := syscall.Kill(cmd.Process.Pid, 9); err != nil {
-			return errors.Errorf("failed to force stop the stress-ng process, err: %v", err)
-		}
-
-		return nil
+	// kill will not be able to exit a defunct (zombie) process,
+	// which will be present only if the stress-ng process
+	// has already completed. Hence if the process isn't killed,
+	// we wait on it, which immediately clears the defunct (zombie) process
+	if err := CheckStressNGProcess(cmd.Process.Pid); err == nil {
+		cmd.Wait()
 	}
 
 	return nil
