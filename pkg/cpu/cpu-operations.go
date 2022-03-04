@@ -6,13 +6,11 @@ import (
 	"fmt"
 	"os/exec"
 
-	"github.com/gorilla/websocket"
-
 	"github.com/pkg/errors"
 )
 
 // StressCPU starts a stress-ng process in background and returns the exec cmd for it
-func StressCPU(payload []byte, reqID string, stdout, stderr *bytes.Buffer, conn *websocket.Conn) (*exec.Cmd, error) {
+func StressCPU(payload []byte, stdout, stderr *bytes.Buffer) (*exec.Cmd, error) {
 
 	type CPUStressParams struct {
 		Workers string
