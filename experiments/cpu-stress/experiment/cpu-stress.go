@@ -72,6 +72,7 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 
 		case "EXECUTE_EXPERIMENT":
 			cmd, err = cpu.StressCPU(payload, reqID, &stdout, &stderr, conn)
+
 			if err != nil {
 				if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetExecuteExperimentErrorPrefix()+err.Error()); err != nil {
 					executeExperimentErrorLogger.Printf("Error occured while sending error message to client, %v", err)
@@ -162,6 +163,7 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 			if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetInvalidActionErrorPrefix()+"Invalid action: "+action); err != nil {
 				invalidActionErrorLogger.Printf("Error occured while sending error message to client, %v", err)
 			}
+
 			conn.Close()
 			return
 		}
