@@ -126,7 +126,7 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 			}
 
 		case "CHECK_LIVENESS":
-			if err := cpu.CheckStressNGProcess(cmd.Process.Pid); err != nil {
+			if err := cpu.CheckProcessLiveness(cmd.Process.Pid); err != nil {
 
 				if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetLivenessCheckErrorPrefix()+err.Error()); err != nil {
 					livenessCheckErrorLogger.Printf("Error occured while sending error message to client, err: %v", err)

@@ -33,8 +33,8 @@ func CheckStressNG() error {
 	return nil
 }
 
-// CheckStressNGProcess checks if the stress-ng process is running
-func CheckStressNGProcess(pid int) error {
+// CheckProcessLiveness checks if a given process is currently running
+func CheckProcessLiveness(pid int) error {
 
 	// On Unix systems, FindProcess always succeeds and returns a Process for
 	// the given pid, regardless of whether the process exists.

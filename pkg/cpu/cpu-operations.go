@@ -73,7 +73,7 @@ func AbortStressNGProcess(cmd *exec.Cmd) error {
 	// which will be present only if the stress-ng process
 	// has already completed. Hence if the process isn't killed,
 	// we wait on it, which immediately clears the defunct (zombie) process
-	if err := CheckStressNGProcess(cmd.Process.Pid); err == nil {
+	if err := CheckProcessLiveness(cmd.Process.Pid); err == nil {
 		cmd.Wait()
 	}
 

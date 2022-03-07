@@ -11,25 +11,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package process
+package cpu
 
 import (
-	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-// TestProcessStateCheck executes the Process State Check with a single process of PID 1
-func TestProcessStateCheck(t *testing.T) {
+func TestCheckProcessLiveness(t *testing.T) {
 
-	pids := []int{1}
-
-	payload, err := json.Marshal(pids)
-
-	assert.Nil(t, err, "Error occured while marshalling PIDs, %v", err)
-
-	err = ProcessStateCheck(payload)
-
-	assert.Nil(t, err, "Error occured during process state check, %v", err)
+	err := CheckProcessLiveness(1)
+	assert.Nil(t, err, "Error occured during init process liveness check, %v", err)
 }
