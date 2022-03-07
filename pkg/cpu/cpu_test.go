@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TestCheckProcessLiveness tests the process liveness check for the init process of PID 1
 func TestCheckProcessLiveness(t *testing.T) {
 
 	err := CheckProcessLiveness(1)
