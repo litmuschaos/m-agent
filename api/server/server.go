@@ -19,7 +19,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/litmuschaos/m-agent/api/server/auth"
-	cpuStress "github.com/litmuschaos/m-agent/experiments/cpu-stress/experiment"
 	processKill "github.com/litmuschaos/m-agent/experiments/process-kill/experiment"
 )
 
@@ -36,7 +35,6 @@ func HandleRequests(port string) error {
 	router := mux.NewRouter()
 
 	router.Handle("/process-kill", auth.IsAuthorized(processKill.ProcessKill))
-	router.Handle("/cpu-stress", auth.IsAuthorized(cpuStress.CPUStress))
 	router.NotFoundHandler = http.HandlerFunc(fallbackRouteHandler)
 
 	return http.ListenAndServe(":"+port, router)
