@@ -154,6 +154,7 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 			cmdProbeStdout, err := probes.ExecuteCmdProbeCommand(payload)
 
 			if err != nil {
+
 				if err := messages.SendMessageToClient(conn, "PROBE_ERROR", reqID, errorcodes.GetCommandProbeExecutionErrorPrefix()+err.Error()); err != nil {
 
 					commandProbeExecutionErrorLogger.Printf("Error occured while sending error message to client, err: %v", err)
@@ -164,17 +165,19 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 
 					return
 				}
-			}
 
-			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, cmdProbeStdout); err != nil {
+			} else {
 
-				commandProbeExecutionErrorLogger.Printf("Error occured while sending feedback message to client, err: %v", err)
+				if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, cmdProbeStdout); err != nil {
 
-				if err := conn.Close(); err != nil {
-					commandProbeExecutionErrorLogger.Printf("Error occured while closing the connection, err: %v", err)
+					commandProbeExecutionErrorLogger.Printf("Error occured while sending feedback message to client, err: %v", err)
+
+					if err := conn.Close(); err != nil {
+						commandProbeExecutionErrorLogger.Printf("Error occured while closing the connection, err: %v", err)
+					}
+
+					return
 				}
-
-				return
 			}
 
 		case "REVERT_CHAOS":
