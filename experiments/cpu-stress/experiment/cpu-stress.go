@@ -154,7 +154,7 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 			cmdProbeStdout, err := probes.ExecuteCmdProbeCommand(payload)
 
 			if err != nil {
-				if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetCommandProbeExecutionErrorPrefix()+err.Error()); err != nil {
+				if err := messages.SendMessageToClient(conn, "PROBE_ERROR", reqID, errorcodes.GetCommandProbeExecutionErrorPrefix()+err.Error()); err != nil {
 
 					commandProbeExecutionErrorLogger.Printf("Error occured while sending error message to client, err: %v", err)
 
