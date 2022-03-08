@@ -12,6 +12,8 @@ HAS_CURL="$(type "curl" &> /dev/null && echo true || echo false)"
 HAS_WGET="$(type "wget" &> /dev/null && echo true || echo false)"
 HAS_SYSTEMD="$(type "systemctl" &> /dev/null && echo true || echo false)"
 
+HAS_STRESS_NG="$(type "stress-ng" &> /dev/null && echo true || echo false)"
+
 # initArch discovers the architecture for this system
 initArch() {
   ARCH=$(uname -m)
@@ -62,6 +64,11 @@ verifySupported() {
 
   if [ "$(netstat -tulpn | grep $PORT)" != "" ]; then
     echo "$PORT port is not available"
+    exit 1
+  fi
+
+  if [ "${HAS_STRESS_NG}" != "true" ]; then
+    printf "stress-ng not found, please install stress-ng:\nhttps://snapcraft.io/install/stress-ng/ubuntu"
     exit 1
   fi
 }
