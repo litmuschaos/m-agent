@@ -13,6 +13,21 @@ $ chmod 700 get_m-agent.sh
 $ ./get_m-agent.sh
 ```
 
+You can specify any particular m-agent version for installation:
+```
+$ ./get_m-agent.sh --version <VERSION>
+```
+
+You can also specify a custom port at which m-agent should listen for client messages:
+```
+$ ./get_m-agent.sh --port <PORT>
+```
+
+Finally, you can specify if the installation can take place without using `sudo`, if it is not present:
+```
+$ ./get_m-agent.sh --no-sudo
+```
+
 # Usage
 ```
 Usage: m-agent [options]
@@ -22,6 +37,8 @@ options:
     	generates a token to be used for the authentication of the requests made to the agent
   -token-expiry-duration string
     	token expiry duration (non-interactive mode)
+  -update-port string
+      update the m-agent server port
 ```
 
 Upon installing m-agent, you can use it to generate a token for your Chaos Experiment. It step will require you to specify an expiry duration for your token. Tokens are valid through a minimum duration of 1 minute to a maximum of 30 days. The token can be generated in two modes:
@@ -46,6 +63,12 @@ Similarly, a token valid for 15 days from the time of creation can be specified 
 ```
 m-agent -get-token -token-expiry-duration 15D
 ```
+
+You can also update the port at which m-agent should listen for the client messages:
+```
+m-agent -updated-port <NEW_PORT>
+sudo systemctl restart m-agent
+```  
 
 # Uninstallation
 If you wish to uninstall m-agent, you can execute the following commands in the target machine:
