@@ -175,8 +175,8 @@ fail_trap() {
 help () {
   echo "Accepted cli arguments are:"
   echo -e "\t[--help|-h ] ->> prints this help"
-  echo -e "\t[--version|-v <desired_version>] . When not defined it fetches the latest release from GitHub"
-  echo -e "\te.g. --version v3.0.0 or -v canary"
+  echo -e "\t[--version|-v <desired_version>] ->> When not defined it fetches the latest release from GitHub"
+  echo -e "\te.g. --version 1.0.0 or -v master"
   echo -e "\t[--no-sudo]  ->> install without sudo"
   echo -e "\t[--port|-p <port>] ->> custom port for m-agent server"
 }
