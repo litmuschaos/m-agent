@@ -3,7 +3,7 @@ Machine Agent a.k.a. m-agent is a lightweight, platform-generic daemon agent tha
 
 # Requirements
 - Linux OS [Tested on Ubuntu, CentOS, RHEL, and SUSE Linux]
-- Systemd
+- systemd
 
 # Installation
 To install m-agent in your target machine, you can execute the following commands in the target machine:
@@ -18,7 +18,7 @@ You can specify any particular m-agent version for installation:
 $ ./get_m-agent.sh --version <VERSION>
 ```
 
-You can also specify a custom port at which m-agent should listen for client messages:
+By default, `41365` port is utilized by m-agent. You can specify a custom port at which m-agent should listen for client messages:
 ```
 $ ./get_m-agent.sh --port <PORT>
 ```
