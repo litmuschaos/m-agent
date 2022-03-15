@@ -1,6 +1,6 @@
 asyncapi: 2.2.0
 info:
-  title: M-Agent API for CPU Stress Experiment
+  title: M-Agent API for Process Kill Experiment
   version: v1.0.0
   description: >
     Process Kill experiment causes target processes, identified by their PIDs, to be killed in either serial or parallel mode.
