@@ -1,32 +1,24 @@
 asyncapi: 2.2.0
 info:
-  title: M-Agent API for Process Kill Experiment
+  title: M-Agent API for CPU Stress Experiment
   version: v1.0.0
   description: >
-    M-Agent is a platform-generic, OS scoped agent for aiding with the injection and
-    orchestration of the faults, as part of the LitmusChaos Experiments. It can
-    also be used to inject chaos into any physical node installed with a Linux OS. 
-    
-    Process Kill experiment causes target processes, identified by their PIDs,
-    to be killed in either serial or parallel mode.
+    Process Kill experiment causes target processes, identified by their PIDs, to be killed in either serial or parallel mode.
   license:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0
 servers:
   endpoint:
-    url: ws://<node-external-ip>:41365/process-kill
+    url: ws://<NODE_EXTERNAL_IP>:<PORT>/process-kill
     protocol: ws
     variables:
       port:
         enum:
-          - '41365'
+          - '<PORT>'
     security:
       - http: []
     description: >
-      The agent endpoint is exposed at port **41365**, where the client can
-      attempt to establish a connection, given the agent is publicly accessible.
-      For the connection to be established, an authentication token is required
-      which can be generated using the agent itself.
+      The agent endpoint is exposed at a port, which by default is **41365** but can be changed, where the client can attempt to establish a connection, given the agent is publicly accessible. For the connection to be established, an authentication token is required which can be generated using m-agent itself.
 defaultContentType: application/json
 channels:
   ACTION_SUCCESSFUL:
@@ -127,5 +119,5 @@ components:
       description: >-
         The authentication token obtained from the agent is to be put in the
         request header with key "Authorization" and value "Bearer
-        \<authentication-token>". 
+        \<AUTHENTICATION_TOKEN>". 
       bearerFormat: JWT
