@@ -27,6 +27,7 @@ func main() {
 
 	generateToken := flag.Bool("get-token", false, "generates a token to be used for the authentication of the requests made to the agent")
 	tokenExpiryDuration := flag.String("token-expiry-duration", "", "token expiry duration (non-interactive mode)")
+	updatePort := flag.String("update-port", "", "update the m-agent server port")
 	flag.Parse()
 
 	if *generateToken {
@@ -46,13 +47,24 @@ func main() {
 				tokenErrorLogger.Println(err)
 			}
 		}
+	} else if *updatePort != "" {
+
+		if err := port.UpdateMAgentPort(*updatePort); err != nil {
+			log.Printf("Unable to update port, err: %v", err)
+		}
 	} else {
 
-		if port.IsPortOpen("41365") {
+		serverPort, err := port.GetMAgentPort()
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		if port.IsPortOpen(serverPort) {
 
 			// handle client requests
-			if err := server.HandleRequests(); err != nil {
-				log.Fatal(err)
+			if err := server.HandleRequests(serverPort); err != nil {
+				log.Println(err)
 			}
 		} else {
 

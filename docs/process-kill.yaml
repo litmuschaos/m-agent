@@ -3,30 +3,22 @@ info:
   title: M-Agent API for Process Kill Experiment
   version: v1.0.0
   description: >
-    M-Agent is a platform-generic, OS scoped agent for aiding with the injection and
-    orchestration of the faults, as part of the LitmusChaos Experiments. It can
-    also be used to inject chaos into any physical node installed with a Linux OS. 
-    
-    Process Kill experiment causes target processes, identified by their PIDs,
-    to be killed in either serial or parallel mode.
+    Process Kill experiment causes target processes, identified by their PIDs, to be killed in either serial or parallel mode.
   license:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0
 servers:
   endpoint:
-    url: ws://<node-external-ip>:41365/process-kill
+    url: ws://<NODE_EXTERNAL_IP>:<PORT>/process-kill
     protocol: ws
     variables:
       port:
         enum:
-          - '41365'
+          - '<PORT>'
     security:
       - http: []
     description: >
-      The agent endpoint is exposed at port **41365**, where the client can
-      attempt to establish a connection, given the agent is publicly accessible.
-      For the connection to be established, an authentication token is required
-      which can be generated using the agent itself.
+      The agent endpoint is exposed at a port, which by default is **41365** but can be changed, where the client can attempt to establish a connection, given the agent is publicly accessible. For the connection to be established, an authentication token is required which can be generated using m-agent itself.
 defaultContentType: application/json
 channels:
   ACTION_SUCCESSFUL:
@@ -36,9 +28,7 @@ channels:
     publish:
       summary: >-
         The message consists of a "feedback" of type string, with the value
-        "ACTION_SUCCESSFUL" and a "payload" of type object (Go Interface type).
-        The payload can therefore contain any kind of object that may suitably
-        be sent as part of the feedback.
+        "ACTION_SUCCESSFUL" and a "payload" of type object (Go Interface type), along with a Request ID string which was obtained from the client message. The payload can therefore contain any kind of object that may suitably be sent as part of the feedback.
       operationId: ACTION_SUCCESSFUL
       message:
         $ref: '#/components/messages/message'
@@ -49,12 +39,11 @@ channels:
     publish:
       summary: >-
         The message consists of a "feedback" of type string, with the value
-        "ERROR" and a "payload" of type object (Go Interface type). In this
-        case, the payload will contain the error message, which will be of type
-        string.
+        "ERROR" and a "payload" of type object (Go Interface type), along with a Request ID string which was obtained from the client message. In this case, the payload will contain the error message, which will be of type string.
       operationId: ERROR
       message:
         $ref: '#/components/messages/message'
+
   CHECK_STEADY_STATE:
     description: >-
       Validates the steady state of the target Processes i.e. whether all the
@@ -62,9 +51,7 @@ channels:
     subscribe:
       summary: >-
         The message consists of an "action" of type string, with the value
-        "CHECK_STEADY_STATE" and a "payload" of type object (Go Interface type).
-        In this case, the payload will consist of an integer array which will contain 
-        the PIDs of the target processes.
+        "CHECK_STEADY_STATE" and a "payload" of type object (Go Interface type), along with a Request ID string. In this case, the payload will consist of an integer array which will contain the PIDs of the target processes.
       operationId: CHECK_STEADY_STATE
       message:
         $ref: '#/components/messages/message'
@@ -73,21 +60,35 @@ channels:
     subscribe:
       summary: >-
         The message consists of an "action" of type string, with the value
-        "EXECUTE_EXPERIMENT" and a "payload" of type object (Go Interface type).
-        In this case, the payload will consist of an integer array which will contain 
-        the PIDs of the target processes.
+        "EXECUTE_EXPERIMENT" and a "payload" of type object (Go Interface type), along with a Request ID string. In this case, the payload will consist of an integer array which will contain the PIDs of the target processes.
       operationId: EXECUTE_EXPERIMENT
       message:
         $ref: '#/components/messages/message'
   EXECUTE_COMMAND:
-    description: Executes a bash script command as part of the Litmus cmdProbe execution.
+    description: Executes a bash command as part of the Litmus inline cmdProbe execution.
     subscribe:
       summary: >-
         The message consists of an "action" of type string, with the value
-        "EXECUTE_EXPERIMENT" and a "payload" of type object (Go Interface type).
-        In this case, the payload will contain the bash script command of type
-        string.
+        "EXECUTE_EXPERIMENT" and a "payload" of type object (Go Interface type), along with a Request ID string. In this case, the payload will contain the bash script command of type string.
       operationId: EXECUTE_COMMAND
+      message:
+        $ref: '#/components/messages/message'
+  CHECK_LIVENESS:
+    description: Validates the liveness of m-agent in target machine through the Chaos Interval.
+    subscribe:
+      summary: >-
+        The message consists of an "action" of type string, with the value
+        "CHECK_LIVENESS" and a "payload" of type object (Go Interface type), along with a Request ID string. In this case, the payload will be nil.
+      operationId: CHECK_LIVENESS
+      message:
+        $ref: '#/components/messages/message'
+  CLOSE_CONNECTION:
+    description: Closes the websocket connection after echoing a CLOSE_CONNECTION message back to the client.
+    subscribe:
+      summary: >-
+        The message consists of an "action" of type string, with the value
+        "CLOSE_CONNECTION" and a "payload" of type object (Go Interface type), along with a Request ID string. In this case, the payload will be nil.
+      operationId: CLOSE_CONNECTION
       message:
         $ref: '#/components/messages/message'
 components:
@@ -97,8 +98,7 @@ components:
       title: Message
       summary: >-
         Message encapsulates an "action" or a "feedback" of type string and a
-        payload of type object (Go Interface type), which can then be sent to
-        the server from the client or vice-versa.
+        payload of type object (Go Interface type), along with a Request ID string, which can then be sent to the server from the client or vice-versa. It also contains a Request ID to appropriately map the response message by m-agent for the corresponding message.
       contentType: application/json
       payload:
         $ref: '#/components/schemas/Message'
@@ -110,6 +110,8 @@ components:
           type: string
         Payload:
           type: object
+        ReqID:
+          type: string
   securitySchemes:
     http:
       type: http
@@ -117,5 +119,5 @@ components:
       description: >-
         The authentication token obtained from the agent is to be put in the
         request header with key "Authorization" and value "Bearer
-        \<authentication-token>". 
+        \<AUTHENTICATION_TOKEN>". 
       bearerFormat: JWT

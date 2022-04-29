@@ -16,6 +16,8 @@ package process
 import (
 	"encoding/json"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // TestProcessStateCheck executes the Process State Check with a single process of PID 1
@@ -24,11 +26,10 @@ func TestProcessStateCheck(t *testing.T) {
 	pids := []int{1}
 
 	payload, err := json.Marshal(pids)
-	if err != nil {
-		t.Fatalf("Error occured while marshalling PIDs, %v", err)
-	}
 
-	if err := ProcessStateCheck(payload); err != nil {
-		t.Fatalf("Error occured during process state check, %v", err)
-	}
+	assert.Nil(t, err, "Error occured while marshalling PIDs, %v", err)
+
+	err = ProcessStateCheck(payload)
+
+	assert.Nil(t, err, "Error occured during process state check, %v", err)
 }

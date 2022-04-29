@@ -14,26 +14,38 @@
 package errorcodes
 
 const (
-	tokenErrorCode   = "1000"
+	tokenErrorCode   = "2000"
 	tokenErrorString = "TOKEN_ERROR"
 
-	authErrorCode   = "1001"
+	authErrorCode   = "2001"
 	authErrorString = "AUTH_ERROR"
 
-	clientMessageReadErrorCode   = "1002"
+	clientMessageReadErrorCode   = "2002"
 	clientMessageReadErrorString = "CLIENT_MESSAGE_READ_ERROR"
 
-	steadyStateCheckErrorCode   = "1003"
+	steadyStateCheckErrorCode   = "2003"
 	steadyStateCheckErrorString = "STEADY_STATE_CHECK_ERROR"
 
-	executeExperimentErrorCode   = "1004"
+	executeExperimentErrorCode   = "2004"
 	executeExperimentErrorString = "EXPERIMENT_EXECUTION_ERROR"
 
-	commandProbeExecutionErrorCode   = "1005"
+	commandProbeExecutionErrorCode   = "2005"
 	commandProbeExecutionErrorString = "COMMAND_EXECUTION_ERROR"
 
-	invalidActionErrorCode   = "1006"
+	invalidActionErrorCode   = "2006"
 	invalidActionErrorString = "INVALID_ACTION_ERROR"
+
+	chaosAbortErrorCode   = "2007"
+	chaosAbortErrorString = "CHAOS_ABORT_ERROR"
+
+	livenessCheckErrorCode   = "2008"
+	livenessCheckErrorString = "LIVENESS_CHECK_ERROR"
+
+	closeConnectionErrorCode   = "2009"
+	closeConnectionErrorString = "CLOSE_CONNECTION_ERROR"
+
+	chaosRevertErrorCode   = "2010"
+	chaosRevertErrorString = "CHAOS_REVERT_ERROR"
 )
 
 func GetTokenErrorPrefix() string {
@@ -62,4 +74,20 @@ func GetCommandProbeExecutionErrorPrefix() string {
 
 func GetInvalidActionErrorPrefix() string {
 	return invalidActionErrorCode + ": " + invalidActionErrorString + ": "
+}
+
+func GetChaosAbortErrorPrefix() string {
+	return chaosAbortErrorCode + ": " + chaosAbortErrorString + ": "
+}
+
+func GetLivenessCheckErrorPrefix() string {
+	return livenessCheckErrorCode + ": " + livenessCheckErrorString + ": "
+}
+
+func GetCloseConnectionErrorPrefix() string {
+	return closeConnectionErrorCode + ": " + closeConnectionErrorString + ": "
+}
+
+func GetChaosRevertErrorPrefix() string {
+	return chaosRevertErrorCode + ": " + chaosRevertErrorString + ": "
 }

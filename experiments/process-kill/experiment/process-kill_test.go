@@ -26,39 +26,30 @@ import (
 )
 
 // sendMessageToServer sends messages to the client by encapsulating an action and a payload
-func sendMessageToServer(conn *websocket.Conn, action string, payload interface{}) error {
+func sendMessageToServer(conn *websocket.Conn, action string, payload interface{}) (string, []byte, error) {
 
-	err := conn.WriteJSON(messages.Message{Action: action, Payload: payload})
-	if err != nil {
-		return err
+	if err := conn.WriteJSON(messages.Message{Action: action, Payload: payload}); err != nil {
+		return "", nil, err
 	}
-
-	return nil
-}
-
-// listenForServerMessage listens for messages from server and returns an action and a payload
-func listenForServerMessage(conn *websocket.Conn) (string, []byte, error) {
 
 	var msg messages.Message
 
-	err := conn.ReadJSON(&msg)
-	if err != nil {
-		return "", []byte{}, err
+	if err := conn.ReadJSON(&msg); err != nil {
+		return "", nil, err
 	}
 
-	payload, err := json.Marshal(msg.Payload)
+	clientPayload, err := json.Marshal(msg.Payload)
 	if err != nil {
-		return "", []byte{}, err
+		return "", nil, err
 	}
 
-	return msg.Action, payload, nil
+	return msg.Action, clientPayload, nil
 }
 
 // TestProcessKillCmdProbe executes the cmd probe
 func TestProcessKillCmdProbe(t *testing.T) {
 
 	s := httptest.NewServer(http.HandlerFunc(ProcessKill))
-	defer s.Close()
 
 	// Convert http://127.0.0.1 to ws://127.0.0.1
 	url := "ws" + strings.TrimPrefix(s.URL, "http")
@@ -68,15 +59,14 @@ func TestProcessKillCmdProbe(t *testing.T) {
 		t.Fatalf("%v", err)
 	}
 
-	defer conn.Close()
+	defer func() {
+		conn.Close()
+		s.Close()
+	}()
 
-	if err := sendMessageToServer(conn, "EXECUTE_COMMAND", `echo "This is echoed from the probe"`); err != nil {
-		t.Fatalf("Unable to send message to the server, %v", err)
-	}
-
-	feedback, payload, err := listenForServerMessage(conn)
+	feedback, payload, err := sendMessageToServer(conn, "EXECUTE_COMMAND", `echo "This is echoed from the probe"`)
 	if err != nil {
-		t.Fatalf("Failed to recieve message from server, %v", err)
+		t.Fatalf("Unable to send message to the server, %v", err)
 	}
 
 	if feedback != "ACTION_SUCCESSFUL" {
@@ -111,7 +101,6 @@ func TestProcessKillCmdProbe(t *testing.T) {
 func TestProcessKillSteadyStateCheck(t *testing.T) {
 
 	s := httptest.NewServer(http.HandlerFunc(ProcessKill))
-	defer s.Close()
 
 	// Convert http://127.0.0.1 to ws://127.0.0.1
 	url := "ws" + strings.TrimPrefix(s.URL, "http")
@@ -121,15 +110,14 @@ func TestProcessKillSteadyStateCheck(t *testing.T) {
 		t.Fatalf("%v", err)
 	}
 
-	defer conn.Close()
+	defer func() {
+		conn.Close()
+		s.Close()
+	}()
 
-	if err := sendMessageToServer(conn, "CHECK_STEADY_STATE", []int{1}); err != nil {
-		t.Fatalf("unable to send message to the server, %v", err)
-	}
-
-	feedback, payload, err := listenForServerMessage(conn)
+	feedback, payload, err := sendMessageToServer(conn, "CHECK_STEADY_STATE", []int{1})
 	if err != nil {
-		t.Fatalf("Failed to recieve message from server, %v", err)
+		t.Fatalf("unable to send message to the server, %v", err)
 	}
 
 	if feedback != "ACTION_SUCCESSFUL" {

@@ -14,7 +14,7 @@
 package experiment
 
 import (
-	"log"
+	"fmt"
 	"net/http"
 
 	errorcodes "github.com/litmuschaos/m-agent/internal/m-agent/errorcodes"
@@ -36,22 +36,28 @@ func ProcessKill(w http.ResponseWriter, r *http.Request) {
 	executeExperimentErrorLogger := logger.GetExecuteExperimentErrorLogger()
 	commandProbeExecutionErrorLogger := logger.GetCommandProbeExecutionErrorLogger()
 	invalidActionErrorLogger := logger.GetCommandProbeExecutionErrorLogger()
+	livenessCheckErrorLogger := logger.GetLivenessCheckErrorLogger()
+	closeConnectionErrorLogger := logger.GetCloseConnectionErrorLogger()
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Printf("Failed to establish connection with client, %v", err)
+		fmt.Fprintf(w, "Failed to establish connection with client, err: %v", err)
 		return
 	}
 
 	for {
 
-		action, payload, err := messages.ListenForClientMessage(conn)
+		action, reqID, payload, err := messages.ListenForClientMessage(conn)
 		if err != nil {
-			if err := messages.SendMessageToClient(conn, "ERROR", errorcodes.GetClientMessageReadErrorPrefix()+err.Error()); err != nil {
 
+			if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetClientMessageReadErrorPrefix()+err.Error()); err != nil {
 				clientMessageReadLogger.Printf("Error occured while sending error message to client, %v", err)
 			}
-			conn.Close()
+
+			if err := conn.Close(); err != nil {
+				clientMessageReadLogger.Printf("Error occured while closing the connection, err: %v", err)
+			}
+
 			return
 		}
 
@@ -60,33 +66,50 @@ func ProcessKill(w http.ResponseWriter, r *http.Request) {
 		case "CHECK_STEADY_STATE":
 			if err := process.ProcessStateCheck(payload); err != nil {
 
-				if err := messages.SendMessageToClient(conn, "ERROR", errorcodes.GetSteadyStateCheckErrorPrefix()+err.Error()); err != nil {
-					steadyStateCheckErrorLogger.Printf("Error occured while sending error message to client, %v", err)
+				if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetSteadyStateCheckErrorPrefix()+err.Error()); err != nil {
+					steadyStateCheckErrorLogger.Printf("Error occured while sending error message to client, err: %v", err)
 				}
 
-				conn.Close()
+				if err := conn.Close(); err != nil {
+					steadyStateCheckErrorLogger.Printf("Error occured while closing the connection, err: %v", err)
+				}
+
 				return
 			}
 
-			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", messages.Message{}); err != nil {
+			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, nil); err != nil {
 
 				steadyStateCheckErrorLogger.Printf("Error occured while sending feedback message to client, %v", err)
-				conn.Close()
+
+				if err := conn.Close(); err != nil {
+					steadyStateCheckErrorLogger.Printf("Error occured while closing the connection, err: %v", err)
+				}
+
 				return
 			}
 
 		case "EXECUTE_EXPERIMENT":
 			if err := process.KillTargetProcesses(payload); err != nil {
-				if err := messages.SendMessageToClient(conn, "ERROR", errorcodes.GetExecuteExperimentErrorPrefix()+err.Error()); err != nil {
-					executeExperimentErrorLogger.Printf("Error occured while sending error message to client, %v", err)
+
+				if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetExecuteExperimentErrorPrefix()+err.Error()); err != nil {
+					executeExperimentErrorLogger.Printf("Error occured while sending error message to client, err: %v", err)
 				}
-				conn.Close()
+
+				if err := conn.Close(); err != nil {
+					executeExperimentErrorLogger.Printf("Error occured while closing the connection, err: %v", err)
+				}
+
 				return
 			}
 
-			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", messages.Message{}); err != nil {
-				executeExperimentErrorLogger.Printf("Error occured while sending feedback message to client, %v", err)
-				conn.Close()
+			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, nil); err != nil {
+
+				executeExperimentErrorLogger.Printf("Error occured while sending feedback message to client, err: %v", err)
+
+				if err := conn.Close(); err != nil {
+					executeExperimentErrorLogger.Printf("Error occured while closing the connection, err: %v", err)
+				}
+
 				return
 			}
 
@@ -94,24 +117,70 @@ func ProcessKill(w http.ResponseWriter, r *http.Request) {
 			stdout, err := probes.ExecuteCmdProbeCommand(payload)
 
 			if err != nil {
-				if err := messages.SendMessageToClient(conn, "ERROR", errorcodes.GetCommandProbeExecutionErrorPrefix()+err.Error()); err != nil {
-					commandProbeExecutionErrorLogger.Printf("Error occured while sending error message to client, %v", err)
-					conn.Close()
+				if err := messages.SendMessageToClient(conn, "PROBE_ERROR", reqID, errorcodes.GetCommandProbeExecutionErrorPrefix()+err.Error()); err != nil {
+
+					commandProbeExecutionErrorLogger.Printf("Error occured while sending error message to client, err: %v", err)
+
+					if err := conn.Close(); err != nil {
+						commandProbeExecutionErrorLogger.Printf("Error occured while closing the connection, err: %v", err)
+					}
+
+					return
+				}
+
+			} else {
+
+				if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, stdout); err != nil {
+
+					commandProbeExecutionErrorLogger.Printf("Error occured while sending feedback message to client, err: %v", err)
+
+					if err := conn.Close(); err != nil {
+						commandProbeExecutionErrorLogger.Printf("Error occured while closing the connection, err: %v", err)
+					}
+
 					return
 				}
 			}
 
-			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", stdout); err != nil {
-				commandProbeExecutionErrorLogger.Printf("Error occured while sending feedback message to client, %v", err)
-				conn.Close()
+		case "CHECK_LIVENESS":
+			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, nil); err != nil {
+
+				livenessCheckErrorLogger.Printf("Error occured while sending feedback message to client, err: %v", err)
+
+				if err := conn.Close(); err != nil {
+					livenessCheckErrorLogger.Printf("Error occured while closing the connection, err: %v", err)
+				}
+
 				return
 			}
 
-		default:
-			if err := messages.SendMessageToClient(conn, "ERROR", errorcodes.GetInvalidActionErrorPrefix()+"Invalid action: "+action); err != nil {
-				invalidActionErrorLogger.Printf("Error occured while sending error message to client, %v", err)
+		case "CLOSE_CONNECTION":
+			if err := messages.SendMessageToClient(conn, "CLOSE_CONNECTION", reqID, nil); err != nil {
+
+				closeConnectionErrorLogger.Printf("Error occured while sending feedback message to client, err: %v", err)
+
+				if err := conn.Close(); err != nil {
+					closeConnectionErrorLogger.Printf("Error occured while closing the connection, err: %v", err)
+				}
+
+				return
 			}
-			conn.Close()
+
+			if err := conn.Close(); err != nil {
+				closeConnectionErrorLogger.Printf("Error occured while closing the connection, err: %v", err)
+			}
+
+			return
+
+		default:
+			if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetInvalidActionErrorPrefix()+"Invalid action: "+action); err != nil {
+				invalidActionErrorLogger.Printf("Error occured while sending error message to client, err: %v", err)
+			}
+
+			if err := conn.Close(); err != nil {
+				invalidActionErrorLogger.Printf("Error occured while closing the connection, err: %v", err)
+			}
+
 			return
 		}
 	}

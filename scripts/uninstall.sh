@@ -51,6 +51,10 @@ uninstall() {
   runAsRoot rm "$SERVICE_DIR/$SERVICE_NAME"
   echo "Removed $SERVICE_NAME unit file"
 
+  runAsRoot rm "/etc/$BINARY_NAME/PORT"
+  runAsRoot rmdir "/etc/$BINARY_NAME"
+  echo "Removed $BINARY_NAME server PORT config file"
+
   runAsRoot rm "$M_AGENT_INSTALL_DIR/$BINARY_NAME"
   echo "Removed $BINARY_NAME binary file"
 }
