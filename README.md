@@ -66,7 +66,7 @@ m-agent -get-token -token-expiry-duration 15D
 
 You can also update the port at which m-agent should listen for the client messages:
 ```
-m-agent -updated-port <NEW_PORT>
+sudo m-agent -updated-port <NEW_PORT>
 sudo systemctl restart m-agent
 ```  
 
