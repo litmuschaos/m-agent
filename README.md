@@ -1,3 +1,7 @@
+[![Go Report Card](https://goreportcard.com/badge/github.com/litmuschaos/m-agent)](https://goreportcard.com/report/github.com/litmuschaos/m-agent)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Flitmuschaos%2Fm-agent.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Flitmuschaos%2Fm-agent?ref=badge_shield)
+![GitHub Workflow](https://github.com/litmuschaos/m-agent/actions/workflows/push.yml/badge.svg?branch=master)
+
 # m-agent
 Machine Agent a.k.a. m-agent is a lightweight, platform-generic daemon agent that can remotely inject faults into machine scoped resources, as part of the LitmusChaos Experiments.
 
