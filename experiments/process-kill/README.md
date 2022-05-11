@@ -1,6 +1,5 @@
 # M-Agent API for Process Kill Experiment v1.0.0 documentation
 
-M-Agent is a platform-generic, OS scoped agent for aiding with the injection and orchestration of the faults, as part of the LitmusChaos Experiments. It can also be used to inject chaos into any physical node installed with a Linux OS. 
 Process Kill experiment causes target processes, identified by their PIDs, to be killed in either serial or parallel mode.
 
 ## Table of Contents
@@ -22,9 +21,9 @@ Process Kill experiment causes target processes, identified by their PIDs, to be
   </thead>
   <tbody>
   <tr>
-      <td>ws://&lt;node-external-ip&gt;:41365/process-kill</td>
+      <td>ws://&lt;NODE_EXTERNAL_IP&gt;:&lt;PORT&gt;/process-kill</td>
       <td>ws</td>
-      <td>The agent endpoint is exposed at port **41365**, where the client can attempt to establish a connection, given the agent is publicly accessible. For the connection to be established, an authentication token is required which can be generated using the agent itself.
+      <td>The agent endpoint is exposed at a port, which by default is **41365** but can be changed, where the client can attempt to establish a connection, given the agent is publicly accessible. For the connection to be established, an authentication token is required which can be generated using m-agent itself.
 </td>
     </tr>
     <tr>
@@ -47,7 +46,7 @@ Process Kill experiment causes target processes, identified by their PIDs, to be
                     <em>None</em>
                   </td>
                 <td>
-                  <ul><li>41365</li></ul>
+                  <ul><li>&lt;PORT&gt;</li></ul>
                   </td>
                 <td></td>
               </tr>
@@ -77,7 +76,7 @@ Process Kill experiment causes target processes, identified by their PIDs, to be
                 <td></td>
                 <td>bearer</td>
                 <td>JWT</td>
-                <td><p>The authentication token obtained from the agent is to be put in the request header with key &quot;Authorization&quot; and value &quot;Bearer &lt;authentication-token&gt;&quot;.</p>
+                <td><p>The authentication token obtained from the agent is to be put in the request header with key &quot;Authorization&quot; and value &quot;Bearer &lt;AUTHENTICATION_TOKEN&gt;&quot;.</p>
 </td>
               </tr></tbody>
           </table>
@@ -105,12 +104,12 @@ Sends a message to the client to indicate that the request for an "action" to be
 
 ###  `publish` ACTION_SUCCESSFUL
 
-*The message consists of a &quot;feedback&quot; of type string, with the value &quot;ACTION_SUCCESSFUL&quot; and a &quot;payload&quot; of type object (Go Interface type). The payload can therefore contain any kind of object that may suitably be sent as part of the feedback.* 
+*The message consists of a &quot;feedback&quot; of type string, with the value &quot;ACTION_SUCCESSFUL&quot; and a &quot;payload&quot; of type object (Go Interface type), along with a Request ID string which was obtained from the client message. The payload can therefore contain any kind of object that may suitably be sent as part of the feedback.* 
 
 #### Message
 
 
-Message encapsulates an &quot;action&quot; or a &quot;feedback&quot; of type string and a payload of type object (Go Interface type), which can then be sent to the server from the client or vice-versa.
+Message encapsulates an &quot;action&quot; or a &quot;feedback&quot; of type string and a payload of type object (Go Interface type), along with a Request ID string, which can then be sent to the server from the client or vice-versa. It also contains a Request ID to appropriately map the response message by m-agent for the corresponding message.
 
 
 
@@ -140,6 +139,13 @@ Message encapsulates an &quot;action&quot; or a &quot;feedback&quot; of type str
   <td>object</td>
   <td> </td>
   <td><em>Any</em></td>
+</tr>
+
+<tr>
+  <td>ReqID </td>
+  <td>string</td>
+  <td> </td>
+  <td><em>Any</em></td>
 </tr></tbody>
 </table>
 
@@ -149,7 +155,8 @@ Message encapsulates an &quot;action&quot; or a &quot;feedback&quot; of type str
 ```json
 {
   "Action": "string",
-  "Payload": {}
+  "Payload": {},
+  "ReqID": "string"
 }
 ```
 
@@ -168,12 +175,12 @@ Sends an error message to the client to indicate that the requested "action" has
 
 ###  `publish` ERROR
 
-*The message consists of a &quot;feedback&quot; of type string, with the value &quot;ERROR&quot; and a &quot;payload&quot; of type object (Go Interface type). In this case, the payload will contain the error message, which will be of type string.* 
+*The message consists of a &quot;feedback&quot; of type string, with the value &quot;ERROR&quot; and a &quot;payload&quot; of type object (Go Interface type), along with a Request ID string which was obtained from the client message. In this case, the payload will contain the error message, which will be of type string.* 
 
 #### Message
 
 
-Message encapsulates an &quot;action&quot; or a &quot;feedback&quot; of type string and a payload of type object (Go Interface type), which can then be sent to the server from the client or vice-versa.
+Message encapsulates an &quot;action&quot; or a &quot;feedback&quot; of type string and a payload of type object (Go Interface type), along with a Request ID string, which can then be sent to the server from the client or vice-versa. It also contains a Request ID to appropriately map the response message by m-agent for the corresponding message.
 
 
 
@@ -203,6 +210,13 @@ Message encapsulates an &quot;action&quot; or a &quot;feedback&quot; of type str
   <td>object</td>
   <td> </td>
   <td><em>Any</em></td>
+</tr>
+
+<tr>
+  <td>ReqID </td>
+  <td>string</td>
+  <td> </td>
+  <td><em>Any</em></td>
 </tr></tbody>
 </table>
 
@@ -212,7 +226,8 @@ Message encapsulates an &quot;action&quot; or a &quot;feedback&quot; of type str
 ```json
 {
   "Action": "string",
-  "Payload": {}
+  "Payload": {},
+  "ReqID": "string"
 }
 ```
 
@@ -231,12 +246,12 @@ Validates the steady state of the target Processes i.e. whether all the target P
 
 ###  `subscribe` CHECK_STEADY_STATE
 
-*The message consists of an &quot;action&quot; of type string, with the value &quot;CHECK_STEADY_STATE&quot; and a &quot;payload&quot; of type object (Go Interface type). In this case, the payload will consist of an integer array which will contain  the PIDs of the target processes.* 
+*The message consists of an &quot;action&quot; of type string, with the value &quot;CHECK_STEADY_STATE&quot; and a &quot;payload&quot; of type object (Go Interface type), along with a Request ID string. In this case, the payload will consist of an integer array which will contain the PIDs of the target processes.* 
 
 #### Message
 
 
-Message encapsulates an &quot;action&quot; or a &quot;feedback&quot; of type string and a payload of type object (Go Interface type), which can then be sent to the server from the client or vice-versa.
+Message encapsulates an &quot;action&quot; or a &quot;feedback&quot; of type string and a payload of type object (Go Interface type), along with a Request ID string, which can then be sent to the server from the client or vice-versa. It also contains a Request ID to appropriately map the response message by m-agent for the corresponding message.
 
 
 
@@ -266,6 +281,13 @@ Message encapsulates an &quot;action&quot; or a &quot;feedback&quot; of type str
   <td>object</td>
   <td> </td>
   <td><em>Any</em></td>
+</tr>
+
+<tr>
+  <td>ReqID </td>
+  <td>string</td>
+  <td> </td>
+  <td><em>Any</em></td>
 </tr></tbody>
 </table>
 
@@ -275,7 +297,8 @@ Message encapsulates an &quot;action&quot; or a &quot;feedback&quot; of type str
 ```json
 {
   "Action": "string",
-  "Payload": {}
+  "Payload": {},
+  "ReqID": "string"
 }
 ```
 
@@ -294,12 +317,12 @@ Kills the target processes.
 
 ###  `subscribe` EXECUTE_EXPERIMENT
 
-*The message consists of an &quot;action&quot; of type string, with the value &quot;EXECUTE_EXPERIMENT&quot; and a &quot;payload&quot; of type object (Go Interface type). In this case, the payload will consist of an integer array which will contain  the PIDs of the target processes.* 
+*The message consists of an &quot;action&quot; of type string, with the value &quot;EXECUTE_EXPERIMENT&quot; and a &quot;payload&quot; of type object (Go Interface type), along with a Request ID string. In this case, the payload will consist of an integer array which will contain the PIDs of the target processes.* 
 
 #### Message
 
 
-Message encapsulates an &quot;action&quot; or a &quot;feedback&quot; of type string and a payload of type object (Go Interface type), which can then be sent to the server from the client or vice-versa.
+Message encapsulates an &quot;action&quot; or a &quot;feedback&quot; of type string and a payload of type object (Go Interface type), along with a Request ID string, which can then be sent to the server from the client or vice-versa. It also contains a Request ID to appropriately map the response message by m-agent for the corresponding message.
 
 
 
@@ -329,6 +352,13 @@ Message encapsulates an &quot;action&quot; or a &quot;feedback&quot; of type str
   <td>object</td>
   <td> </td>
   <td><em>Any</em></td>
+</tr>
+
+<tr>
+  <td>ReqID </td>
+  <td>string</td>
+  <td> </td>
+  <td><em>Any</em></td>
 </tr></tbody>
 </table>
 
@@ -338,7 +368,8 @@ Message encapsulates an &quot;action&quot; or a &quot;feedback&quot; of type str
 ```json
 {
   "Action": "string",
-  "Payload": {}
+  "Payload": {},
+  "ReqID": "string"
 }
 ```
 
@@ -348,7 +379,7 @@ Message encapsulates an &quot;action&quot; or a &quot;feedback&quot; of type str
 
 <a name="channel-EXECUTE_COMMAND"></a>
 
-Executes a bash script command as part of the Litmus cmdProbe execution.
+Executes a bash command as part of the Litmus inline cmdProbe execution.
 
 #### Channel Parameters
 
@@ -357,12 +388,12 @@ Executes a bash script command as part of the Litmus cmdProbe execution.
 
 ###  `subscribe` EXECUTE_COMMAND
 
-*The message consists of an &quot;action&quot; of type string, with the value &quot;EXECUTE_EXPERIMENT&quot; and a &quot;payload&quot; of type object (Go Interface type). In this case, the payload will contain the bash script command of type string.* 
+*The message consists of an &quot;action&quot; of type string, with the value &quot;EXECUTE_EXPERIMENT&quot; and a &quot;payload&quot; of type object (Go Interface type), along with a Request ID string. In this case, the payload will contain the bash script command of type string.* 
 
 #### Message
 
 
-Message encapsulates an &quot;action&quot; or a &quot;feedback&quot; of type string and a payload of type object (Go Interface type), which can then be sent to the server from the client or vice-versa.
+Message encapsulates an &quot;action&quot; or a &quot;feedback&quot; of type string and a payload of type object (Go Interface type), along with a Request ID string, which can then be sent to the server from the client or vice-versa. It also contains a Request ID to appropriately map the response message by m-agent for the corresponding message.
 
 
 
@@ -392,6 +423,13 @@ Message encapsulates an &quot;action&quot; or a &quot;feedback&quot; of type str
   <td>object</td>
   <td> </td>
   <td><em>Any</em></td>
+</tr>
+
+<tr>
+  <td>ReqID </td>
+  <td>string</td>
+  <td> </td>
+  <td><em>Any</em></td>
 </tr></tbody>
 </table>
 
@@ -401,7 +439,150 @@ Message encapsulates an &quot;action&quot; or a &quot;feedback&quot; of type str
 ```json
 {
   "Action": "string",
-  "Payload": {}
+  "Payload": {},
+  "ReqID": "string"
+}
+```
+
+
+
+
+
+<a name="channel-CHECK_LIVENESS"></a>
+
+Validates the liveness of m-agent in target machine through the Chaos Interval.
+
+#### Channel Parameters
+
+
+
+
+###  `subscribe` CHECK_LIVENESS
+
+*The message consists of an &quot;action&quot; of type string, with the value &quot;CHECK_LIVENESS&quot; and a &quot;payload&quot; of type object (Go Interface type), along with a Request ID string. In this case, the payload will be nil.* 
+
+#### Message
+
+
+Message encapsulates an &quot;action&quot; or a &quot;feedback&quot; of type string and a payload of type object (Go Interface type), along with a Request ID string, which can then be sent to the server from the client or vice-versa. It also contains a Request ID to appropriately map the response message by m-agent for the corresponding message.
+
+
+
+##### Payload
+
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Accepted values</th>
+    </tr>
+  </thead>
+  <tbody>
+
+<tr>
+  <td>Action </td>
+  <td>string</td>
+  <td> </td>
+  <td><em>Any</em></td>
+</tr>
+
+<tr>
+  <td>Payload </td>
+  <td>object</td>
+  <td> </td>
+  <td><em>Any</em></td>
+</tr>
+
+<tr>
+  <td>ReqID </td>
+  <td>string</td>
+  <td> </td>
+  <td><em>Any</em></td>
+</tr></tbody>
+</table>
+
+
+###### Example of payload _(generated)_
+
+```json
+{
+  "Action": "string",
+  "Payload": {},
+  "ReqID": "string"
+}
+```
+
+
+
+
+
+<a name="channel-CLOSE_CONNECTION"></a>
+
+Closes the websocket connection after echoing a CLOSE_CONNECTION message back to the client.
+
+#### Channel Parameters
+
+
+
+
+###  `subscribe` CLOSE_CONNECTION
+
+*The message consists of an &quot;action&quot; of type string, with the value &quot;CLOSE_CONNECTION&quot; and a &quot;payload&quot; of type object (Go Interface type), along with a Request ID string. In this case, the payload will be nil.* 
+
+#### Message
+
+
+Message encapsulates an &quot;action&quot; or a &quot;feedback&quot; of type string and a payload of type object (Go Interface type), along with a Request ID string, which can then be sent to the server from the client or vice-versa. It also contains a Request ID to appropriately map the response message by m-agent for the corresponding message.
+
+
+
+##### Payload
+
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Accepted values</th>
+    </tr>
+  </thead>
+  <tbody>
+
+<tr>
+  <td>Action </td>
+  <td>string</td>
+  <td> </td>
+  <td><em>Any</em></td>
+</tr>
+
+<tr>
+  <td>Payload </td>
+  <td>object</td>
+  <td> </td>
+  <td><em>Any</em></td>
+</tr>
+
+<tr>
+  <td>ReqID </td>
+  <td>string</td>
+  <td> </td>
+  <td><em>Any</em></td>
+</tr></tbody>
+</table>
+
+
+###### Example of payload _(generated)_
+
+```json
+{
+  "Action": "string",
+  "Payload": {},
+  "ReqID": "string"
 }
 ```
 
