@@ -1,6 +1,6 @@
 # m-agent Usage Docs for process-kill experiment
 
-A simple chaos experiment that you can execute using m-agent is process-kill experiment. As the name suggests, a process-kill chaos causes any number of processes in your target machine to be killed ungracefully. In this document, we'll learn how we can execute this chaos experiment using ChaosCenter.
+A simple chaos experiment that you can execute using m-agent is the process-kill experiment. As the name suggests, process-kill chaos causes any number of processes in your target machine to be killed ungracefully. In this document, we'll learn how we can execute this chaos experiment using ChaosCenter.
 
 **Note:** The killed processes are not recovered by the experiment i.e. there's no revert of the chaos injection as part of the experiment execution.  
 
@@ -23,7 +23,7 @@ To generate the authentication token, execute the following command:
 m-agent -get-token
 ```
 
-Choose the duration through which you want the token to remain valid in the prompt. If you want to specify a different expiry duration for the token, you can use [non-interactive](./README.md#usage) token generation.
+Choose the duration for which you want the token to remain valid in the prompt. If you want to specify a different expiry duration for the token, you can use [non-interactive](./README.md#usage) token generation.
 
 Once you have the token and agent endpoint, create a k8s secret YAML manifest `agent-secret.yaml` by updating the following template:
 ```yaml
@@ -49,12 +49,12 @@ Presently, the process-kill experiment charts are not located in the public Litm
 - **Git URL:** https://github.com/litmuschaos/chaos-charts 
 - **Branch:** m-agent
 
-Upon adding the ChaosHub, you will be able to access the os/process-kill experiment charts.
+Upon adding the ChaosHub, you will be able to access the process-kill experiment charts which are inside the os category.
 
 ### STEP-4: Create a Chaos Workflow for m-agent
-Create a Chaos Workflow, and choose the m-agent ChaosHub which you had previously added. Then add the os/process-kill experiment and tune the experiment by adding the target PIDs in `PROCESS_IDS` as comma-separated values. You can leave the other settings as default.
+Create a Chaos Workflow, and choose the m-agent ChaosHub that you had previously added. Then add the os/process-kill experiment and tune the experiment by adding the target PIDs in `PROCESS_IDS` as comma-separated values. You can leave the other settings as default.
 
-You can add any of the Litmus Probes for this experiment as well. The cmdProbe in this case will execute in the target machine so that you can validate your chaos hypothesis condition within the remote target machine.
+You can add Litmus Probes to this experiment as well. The cmdProbe in this case will execute in the target machine so that you can validate your chaos hypothesis condition within the remote target machine.
 
 You can now execute the chaos workflow that you have created.
 
