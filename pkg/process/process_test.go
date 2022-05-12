@@ -27,9 +27,9 @@ func TestProcessStateCheck(t *testing.T) {
 
 	payload, err := json.Marshal(pids)
 
-	assert.Nil(t, err, "Error occured while marshalling PIDs, %v", err)
+	assert.Nil(t, err, "Error occurred while marshalling PIDs, %v", err)
 
 	err = ProcessStateCheck(payload)
 
-	assert.Nil(t, err, "Error occured during process state check, %v", err)
+	assert.Nil(t, err, "Error occurred during process state check, %v", err)
 }
