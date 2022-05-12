@@ -14,6 +14,7 @@
 package cpu
 
 import (
+	"bytes"
 	"os"
 	"os/exec"
 	"syscall"
@@ -24,10 +25,13 @@ import (
 // CheckStressNG uses a bash command to check if the stress-ng tool is installed
 func CheckStressNG() error {
 
-	cmd := exec.Command("/bin/sh", "-c", "command -v stress-ng")
+	var stderr bytes.Buffer
+
+	cmd := exec.Command("/bin/sh", "-c", "command stress-ng")
+	cmd.Stderr = &stderr
 
 	if err := cmd.Run(); err != nil {
-		return err
+		return errors.Errorf(stderr.String())
 	}
 
 	return nil
