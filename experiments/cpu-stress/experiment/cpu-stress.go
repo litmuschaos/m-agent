@@ -25,6 +25,7 @@ import (
 	"github.com/litmuschaos/m-agent/internal/m-agent/upgrader"
 	"github.com/litmuschaos/m-agent/pkg/cpu"
 	"github.com/litmuschaos/m-agent/pkg/probes"
+	stressng "github.com/litmuschaos/m-agent/pkg/stress-ng"
 )
 
 var (
@@ -74,7 +75,7 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 		switch action {
 
 		case "CHECK_STEADY_STATE":
-			if err := cpu.CheckStressNG(); err != nil {
+			if err := stressng.CheckStressNG(); err != nil {
 
 				if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetSteadyStateCheckErrorPrefix()+err.Error()); err != nil {
 					steadyStateCheckErrorLogger.Printf("Error occured while sending error message to client, err: %v", err)
@@ -126,7 +127,7 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 			}
 
 		case "CHECK_LIVENESS":
-			if err := cpu.CheckProcessLiveness(cmd.Process.Pid); err != nil {
+			if err := stressng.CheckStressNGProcessLiveness(cmd.Process.Pid); err != nil {
 
 				if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetLivenessCheckErrorPrefix()+err.Error()); err != nil {
 					livenessCheckErrorLogger.Printf("Error occured while sending error message to client, err: %v", err)
@@ -181,7 +182,7 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 			}
 
 		case "REVERT_CHAOS":
-			if err := cpu.RevertStressNGProcess(cmd, &stderr); err != nil {
+			if err := stressng.RevertStressNGProcess(cmd, &stderr); err != nil {
 
 				if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetChaosRevertErrorPrefix()+err.Error()); err != nil {
 					chaosRevertErrorLogger.Printf("Error occured while sending error message to client, err: %v", err)
@@ -206,7 +207,7 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 			}
 
 		case "ABORT_EXPERIMENT":
-			if err := cpu.AbortStressNGProcess(cmd); err != nil {
+			if err := stressng.AbortStressNGProcess(cmd); err != nil {
 
 				if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetChaosAbortErrorPrefix()+err.Error()); err != nil {
 					chaosAbortErrorLogger.Printf("Error occured while sending error message to client, err: %v", err)

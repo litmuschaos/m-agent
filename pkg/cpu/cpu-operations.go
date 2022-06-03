@@ -49,35 +49,3 @@ func StressCPU(payload []byte, stdout, stderr *bytes.Buffer) (*exec.Cmd, error) 
 
 	return cmd, nil
 }
-
-// RevertStressNGProcess checks and reverts the defunct (zombie) stress-ng process
-func RevertStressNGProcess(cmd *exec.Cmd, stderr *bytes.Buffer) error {
-
-	if err := cmd.Wait(); err != nil {
-		return errors.Errorf("stress-ng process exited with a non-zero exit code: %d; stderr: %v", cmd.ProcessState.ExitCode(), stderr.String())
-	}
-
-	return nil
-}
-
-// AbortStressNGProcess kills a running stress-ng process, and if the
-// process has already completed, it clears the defunct (zombie) process
-func AbortStressNGProcess(cmd *exec.Cmd) error {
-
-	// kill the running stress-ng process to make it exit immediately
-	if err := cmd.Process.Kill(); err != nil {
-		return errors.Errorf("failed to kill the stress-ng process, err: %v", err)
-	}
-
-	// kill will not be able to exit a defunct (zombie) process,
-	// which will be present only if the stress-ng process
-	// has already completed. Hence if the process isn't killed,
-	// we wait on it, which immediately clears the defunct (zombie) process
-	if err := CheckProcessLiveness(cmd.Process.Pid); err == nil {
-		if err := cmd.Wait(); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
