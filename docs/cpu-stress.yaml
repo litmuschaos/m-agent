@@ -1,0 +1,126 @@
+asyncapi: 2.2.0
+info:
+  title: M-Agent API for CPU Stress Experiment
+  version: v1.0.0
+  description: >
+    CPU Stress experiment causes the CPUs of the target machines to be stressed at a defined rate for a fixed interval of time.
+servers:
+  endpoint:
+    url: ws://<NODE_EXTERNAL_IP>:<PORT>/cpu-stress
+    protocol: ws
+    variables:
+      port:
+        enum:
+          - '<PORT>'
+    security:
+      - http: []
+    description: >
+      The agent endpoint is exposed at a port, which by default is **41365** but can be changed, where the client can attempt to establish a connection, given the agent is publicly accessible. For the connection to be established, an authentication token is required which can be generated using m-agent itself.
+defaultContentType: application/json
+channels:
+  ACTION_SUCCESSFUL:
+    description: >-
+      Sends a message to the client to indicate that the request for an "action" to be performed has been successfully accomplished.
+    publish:
+      summary: >-
+        The message consists of a "feedback" of type string, with the value "ACTION_SUCCESSFUL" and a "payload" of type object (Go Interface type), along with a Request ID string which was obtained from the client message. The payload can therefore contain any kind of object that may suitably be sent as part of the feedback.
+      operationId: ACTION_SUCCESSFUL
+      message:
+        $ref: '#/components/messages/message'
+  ERROR:
+    description: >-
+      Sends an error message to the client to indicate that the requested "action" has failed, as well as return the error string.
+    publish:
+      summary: >-
+        The message consists of a "feedback" of type string, with the value "ERROR" and a "payload" of type object (Go Interface type), along with a Request ID string which was obtained from the client message. In this case, the payload will contain the error message, which will be of type string.
+      operationId: ERROR
+      message:
+        $ref: '#/components/messages/message'
+
+  CHECK_STEADY_STATE:
+    description: >-
+      Validates the steady state for the cpu-stress experiment by ensuring m-agent is working properly and streess-ng is available.
+    subscribe:
+      summary: >-
+        The message consists of an "action" of type string, with the value "CHECK_STEADY_STATE" and a "payload" of type object (Go Interface type), along with a Request ID string. In this case, the payload will consist of an integer array which will contain the PIDs of the target processes.
+      operationId: CHECK_STEADY_STATE
+      message:
+        $ref: '#/components/messages/message'
+  EXECUTE_EXPERIMENT:
+    description: Stress a defined number of CPUs with a defined load percentage for the specified Chaos Interval.
+    subscribe:
+      summary: >-
+        The message consists of an "action" of type string, with the value "EXECUTE_EXPERIMENT" and a "payload" of type object (Go Interface type), along with a Request ID string. In this case, the payload will consist of a structure CPUStressParams containing field variables for number of target CPUs, load percentage and Chaos Interval.
+      operationId: EXECUTE_EXPERIMENT
+      message:
+        $ref: '#/components/messages/message'
+  EXECUTE_COMMAND:
+    description: Executes a bash command as part of the Litmus inline cmdProbe execution.
+    subscribe:
+      summary: >-
+        The message consists of an "action" of type string, with the value "EXECUTE_EXPERIMENT" and a "payload" of type object (Go Interface type), along with a Request ID string. In this case, the payload will contain the bash script command of type string.
+      operationId: EXECUTE_COMMAND
+      message:
+        $ref: '#/components/messages/message'
+  CHECK_LIVENESS:
+    description: Validates the liveness of m-agent and the stress-ng process for the Chaos Interval.
+    subscribe:
+      summary: >-
+        The message consists of an "action" of type string, with the value "CHECK_LIVENESS" and a "payload" of type object (Go Interface type), along with a Request ID string. In this case, the payload will be nil.
+      operationId: CHECK_LIVENESS
+      message:
+        $ref: '#/components/messages/message'
+  REVERT_CHAOS:
+    description: Reverts the chaos injection by waiting on the defunct stress-ng process and checking for any erroneous exit of the process.
+    subscribe:
+      summary: >-
+        The message consists of an "action" of type string, with the value "REVERT_CHAOS" and a "payload" of type object (Go Interface type), along with a Request ID string. In this case, the payload will be nil.
+      operationId: REVERT_CHAOS
+      message:
+        $ref: '#/components/messages/message'
+  ABORT_EXPERIMENT:
+    description: Aborts CPU stress chaos during the Chaos Interval by forcefully killing the active stress-ng process or removing the defunct process if the execution is already over.
+    subscribe:
+      summary: >-
+        The message consists of an "action" of type string, with the value "ABORT_EXPERIMENT" and a "payload" of type object (Go Interface type), along with a Request ID string. In this case, the payload will be nil.
+      operationId: ABORT_EXPERIMENT
+      message:
+        $ref: '#/components/messages/message'
+  CLOSE_CONNECTION:
+    description: Closes the websocket connection after echoing a CLOSE_CONNECTION message back to the client.
+    subscribe:
+      summary: >-
+        The message consists of an "action" of type string, with the value "CLOSE_CONNECTION" and a "payload" of type object (Go Interface type), along with a Request ID string. In this case, the payload will be nil.
+      operationId: CLOSE_CONNECTION
+      message:
+        $ref: '#/components/messages/message'
+components:
+  messages:
+    message:
+      name: message
+      title: Message
+      summary: >-
+        Message encapsulates an "action" or a "feedback" of type string and a
+        payload of type object (Go Interface type), along with a Request ID string, which can then be sent to the server from the client or vice-versa. It also contains a Request ID to appropriately map the response message by m-agent for the corresponding message.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/Message'
+  schemas:
+    Message:
+      type: object
+      properties:
+        Action:
+          type: string
+        Payload:
+          type: object
+        ReqID:
+          type: string
+  securitySchemes:
+    http:
+      type: http
+      scheme: bearer
+      description: >-
+        The authentication token obtained from the agent is to be put in the
+        request header with key "Authorization" and value "Bearer
+        \<AUTHENTICATION_TOKEN>". 
+      bearerFormat: JWT
