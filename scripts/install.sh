@@ -71,7 +71,7 @@ checkDesiredVersion() {
 
   # Get tag using github api
   local api_release_tags="https://api.github.com/repos/litmuschaos/m-agent/tags"
-    
+
   if [ "${HAS_CURL}" == "true" ]; then
     TAGS=$(curl -Ls $api_release_tags | grep '"name":' | awk '{print $2}' | tr -d '"' | tr -d "v" | tr -d ",")
   elif [ "${HAS_WGET}" == "true" ]; then
@@ -87,7 +87,7 @@ checkDesiredVersion() {
       TAG=$(echo $TAGS | head -1)
     fi
   else
-    if [[ $TAGS == *"$DESIRED_VERSION"* ]]; then
+    if [[ $TAGS == *"$DESIRED_VERSION"* ]] || [[ $DESIRED_VERSION == "master" ]]; then
       TAG=$DESIRED_VERSION
     else
       echo "$DESIRED_VERSION not found"
