@@ -26,6 +26,7 @@ import (
 	"github.com/litmuschaos/m-agent/pkg/cpu"
 	"github.com/litmuschaos/m-agent/pkg/probes"
 	stressng "github.com/litmuschaos/m-agent/pkg/stress-ng"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -60,15 +61,7 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 
 		action, reqID, payload, err := messages.ListenForClientMessage(conn)
 		if err != nil {
-
-			if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetClientMessageReadErrorPrefix()+err.Error()); err != nil {
-				clientMessageReadLogger.Printf("Error occured while sending error message to client, err: %v", err)
-			}
-
-			if err := conn.Close(); err != nil {
-				clientMessageReadLogger.Printf("Error occured while closing the connection, err: %v", err)
-			}
-
+			messages.HandleActionExecutionError(conn, reqID, errorcodes.GetClientMessageReadErrorPrefix(), err, clientMessageReadLogger)
 			return
 		}
 
@@ -76,26 +69,12 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 
 		case "CHECK_STEADY_STATE":
 			if err := stressng.CheckStressNG(); err != nil {
-
-				if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetSteadyStateCheckErrorPrefix()+err.Error()); err != nil {
-					steadyStateCheckErrorLogger.Printf("Error occured while sending error message to client, err: %v", err)
-				}
-
-				if err := conn.Close(); err != nil {
-					steadyStateCheckErrorLogger.Printf("Error occured while closing the connection, err: %v", err)
-				}
-
+				messages.HandleActionExecutionError(conn, reqID, errorcodes.GetSteadyStateCheckErrorPrefix(), err, steadyStateCheckErrorLogger)
 				return
 			}
 
 			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, nil); err != nil {
-
-				steadyStateCheckErrorLogger.Printf("Error occured while sending feedback message to client, err: %v", err)
-
-				if err := conn.Close(); err != nil {
-					steadyStateCheckErrorLogger.Printf("Error occured while closing the connection, err: %v", err)
-				}
-
+				messages.HandleFeedbackTransmissionError(conn, err, steadyStateCheckErrorLogger)
 				return
 			}
 
@@ -103,51 +82,23 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 			cmd, err = cpu.StressCPU(payload, &stdout, &stderr)
 
 			if err != nil {
-
-				if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetExecuteExperimentErrorPrefix()+err.Error()); err != nil {
-					executeExperimentErrorLogger.Printf("Error occured while sending error message to client, err: %v", err)
-				}
-
-				if err := conn.Close(); err != nil {
-					executeExperimentErrorLogger.Printf("Error occured while closing the connection, err: %v", err)
-				}
-
+				messages.HandleActionExecutionError(conn, reqID, errorcodes.GetExecuteExperimentErrorPrefix(), err, executeExperimentErrorLogger)
 				return
 			}
 
 			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, nil); err != nil {
-
-				executeExperimentErrorLogger.Printf("Error occured while sending feedback message to client, err: %v", err)
-
-				if err := conn.Close(); err != nil {
-					executeExperimentErrorLogger.Printf("Error occured while closing the connection, err: %v", err)
-				}
-
+				messages.HandleFeedbackTransmissionError(conn, err, executeExperimentErrorLogger)
 				return
 			}
 
 		case "CHECK_LIVENESS":
 			if err := stressng.CheckStressNGProcessLiveness(cmd.Process.Pid); err != nil {
-
-				if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetLivenessCheckErrorPrefix()+err.Error()); err != nil {
-					livenessCheckErrorLogger.Printf("Error occured while sending error message to client, err: %v", err)
-				}
-
-				if err := conn.Close(); err != nil {
-					livenessCheckErrorLogger.Printf("Error occured while closing the connection, err: %v", err)
-				}
-
+				messages.HandleActionExecutionError(conn, reqID, errorcodes.GetLivenessCheckErrorPrefix(), err, livenessCheckErrorLogger)
 				return
 			}
 
 			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, nil); err != nil {
-
-				livenessCheckErrorLogger.Printf("Error occured while sending feedback message to client, err: %v", err)
-
-				if err := conn.Close(); err != nil {
-					livenessCheckErrorLogger.Printf("Error occured while closing the connection, err: %v", err)
-				}
-
+				messages.HandleFeedbackTransmissionError(conn, err, livenessCheckErrorLogger)
 				return
 			}
 
@@ -157,88 +108,42 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 
 				if err := messages.SendMessageToClient(conn, "PROBE_ERROR", reqID, errorcodes.GetCommandProbeExecutionErrorPrefix()+err.Error()); err != nil {
-
-					commandProbeExecutionErrorLogger.Printf("Error occured while sending error message to client, err: %v", err)
-
-					if err := conn.Close(); err != nil {
-						commandProbeExecutionErrorLogger.Printf("Error occured while closing the connection, err: %v", err)
-					}
-
+					messages.HandleFeedbackTransmissionError(conn, err, commandProbeExecutionErrorLogger)
 					return
 				}
 
 			} else {
 
 				if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, cmdProbeStdout); err != nil {
-
-					commandProbeExecutionErrorLogger.Printf("Error occured while sending feedback message to client, err: %v", err)
-
-					if err := conn.Close(); err != nil {
-						commandProbeExecutionErrorLogger.Printf("Error occured while closing the connection, err: %v", err)
-					}
-
+					messages.HandleFeedbackTransmissionError(conn, err, commandProbeExecutionErrorLogger)
 					return
 				}
 			}
 
 		case "REVERT_CHAOS":
 			if err := stressng.RevertStressNGProcess(cmd, &stderr); err != nil {
-
-				if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetChaosRevertErrorPrefix()+err.Error()); err != nil {
-					chaosRevertErrorLogger.Printf("Error occured while sending error message to client, err: %v", err)
-				}
-
-				if err := conn.Close(); err != nil {
-					chaosRevertErrorLogger.Printf("Error occured while closing the connection, err: %v", err)
-				}
-
+				messages.HandleActionExecutionError(conn, reqID, errorcodes.GetChaosRevertErrorPrefix(), err, chaosRevertErrorLogger)
 				return
 			}
 
 			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, stdout.String()); err != nil {
-
-				chaosRevertErrorLogger.Printf("Error occured while sending feedback message to client, err: %v", err)
-
-				if err := conn.Close(); err != nil {
-					chaosRevertErrorLogger.Printf("Error occured while closing the connection, err: %v", err)
-				}
-
+				messages.HandleFeedbackTransmissionError(conn, err, chaosRevertErrorLogger)
 				return
 			}
 
 		case "ABORT_EXPERIMENT":
 			if err := stressng.AbortStressNGProcess(cmd); err != nil {
-
-				if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetChaosAbortErrorPrefix()+err.Error()); err != nil {
-					chaosAbortErrorLogger.Printf("Error occured while sending error message to client, err: %v", err)
-				}
-
-				if err := conn.Close(); err != nil {
-					chaosAbortErrorLogger.Printf("Error occured while closing the connection, err: %v", err)
-				}
-
+				messages.HandleActionExecutionError(conn, reqID, errorcodes.GetChaosAbortErrorPrefix(), err, chaosAbortErrorLogger)
 				return
 			}
 
 			if err := messages.SendMessageToClient(conn, "ACTION_SUCCESSFUL", reqID, nil); err != nil {
-
-				chaosAbortErrorLogger.Printf("Error occured while sending feedback message to client, err: %v", err)
-
-				if err := conn.Close(); err != nil {
-					chaosAbortErrorLogger.Printf("Error occured while closing the connection, err: %v", err)
-				}
-
+				messages.HandleFeedbackTransmissionError(conn, err, chaosAbortErrorLogger)
 				return
 			}
 
 			if err := messages.SendMessageToClient(conn, "CLOSE_CONNECTION", reqID, nil); err != nil {
-
-				chaosAbortErrorLogger.Printf("Error occured while sending feedback message to client, err: %v", err)
-
-				if err := conn.Close(); err != nil {
-					chaosAbortErrorLogger.Printf("Error occured while closing the connection, err: %v", err)
-				}
-
+				messages.HandleFeedbackTransmissionError(conn, err, chaosAbortErrorLogger)
 				return
 			}
 
@@ -250,14 +155,7 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 
 		case "CLOSE_CONNECTION":
 			if err := messages.SendMessageToClient(conn, "CLOSE_CONNECTION", reqID, nil); err != nil {
-
 				closeConnectionErrorLogger.Printf("Error occured while sending feedback message to client, err: %v", err)
-
-				if err := conn.Close(); err != nil {
-					closeConnectionErrorLogger.Printf("Error occured while closing the connection, err: %v", err)
-				}
-
-				return
 			}
 
 			if err := conn.Close(); err != nil {
@@ -267,14 +165,7 @@ func CPUStress(w http.ResponseWriter, r *http.Request) {
 			return
 
 		default:
-			if err := messages.SendMessageToClient(conn, "ERROR", reqID, errorcodes.GetInvalidActionErrorPrefix()+"Invalid action: "+action); err != nil {
-				invalidActionErrorLogger.Printf("Error occured while sending error message to client, err: %v", err)
-			}
-
-			if err := conn.Close(); err != nil {
-				invalidActionErrorLogger.Printf("Error occured while closing the connection, err: %v", err)
-			}
-
+			messages.HandleActionExecutionError(conn, reqID, errorcodes.GetInvalidActionErrorPrefix(), errors.Errorf("Invalid action: "+action), invalidActionErrorLogger)
 			return
 		}
 	}

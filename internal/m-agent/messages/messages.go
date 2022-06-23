@@ -15,6 +15,7 @@ package messages
 
 import (
 	"encoding/json"
+	"log"
 
 	"github.com/gorilla/websocket"
 )
@@ -46,4 +47,26 @@ func ListenForClientMessage(conn *websocket.Conn) (string, string, []byte, error
 func SendMessageToClient(conn *websocket.Conn, action, reqID string, payload interface{}) error {
 
 	return conn.WriteJSON(Message{action, payload, reqID})
+}
+
+// HandleActionExecutionError handles an error generated while performing the action requested by the client
+func HandleActionExecutionError(conn *websocket.Conn, reqID, errorCode string, err error, logger *log.Logger) {
+
+	if err := SendMessageToClient(conn, "ERROR", reqID, errorCode+err.Error()); err != nil {
+		logger.Printf("Error occured while sending error message to client, err: %v", err)
+	}
+
+	if err := conn.Close(); err != nil {
+		logger.Printf("Error occured while closing the connection, err: %v", err)
+	}
+}
+
+// HandleFeedbackTransmissionError handles an error generated while sending the feedback for an earlier requested action to the client
+func HandleFeedbackTransmissionError(conn *websocket.Conn, err error, logger *log.Logger) {
+
+	logger.Printf("Error occured while sending feedback message to client, err: %v", err)
+
+	if err := conn.Close(); err != nil {
+		logger.Printf("Error occured while closing the connection, err: %v", err)
+	}
 }
